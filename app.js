@@ -116,29 +116,26 @@ class SeatMapper {
     }
     
     updateOverlaySize() {
-        const imageRect = this.image.getBoundingClientRect();
-        const containerRect = this.imageContainerInner.getBoundingClientRect();
-        const naturalWidth = this.image.naturalWidth;
-        const naturalHeight = this.image.naturalHeight;
-        
-        // Calculate image position relative to container-inner
-        // This accounts for any transforms, margins, or positioning
-        const offsetX = imageRect.left - containerRect.left;
-        const offsetY = imageRect.top - containerRect.top;
+        // Get the BASE displayed size of the image (before CSS transform)
+        // This is the actual rendered size at 100% zoom, which may be smaller than
+        // natural size due to max-width/max-height CSS constraints
+        // offsetWidth/offsetHeight give us this pre-transform size
+        const baseWidth = this.image.offsetWidth;
+        const baseHeight = this.image.offsetHeight;
         
         // IMPORTANT: The overlay is inside imageContainerInner which has CSS transform scale applied
-        // So we need to set the overlay size to the NATURAL (pre-scaled) size
+        // We need to set the overlay size to match the IMAGE's base size (not natural size)
         // The container's transform will scale both the image and overlay together
-        this.markerOverlay.setAttribute('width', naturalWidth);
-        this.markerOverlay.setAttribute('height', naturalHeight);
+        this.markerOverlay.setAttribute('width', baseWidth);
+        this.markerOverlay.setAttribute('height', baseHeight);
         
         // Set viewBox to match for proper coordinate system
-        this.markerOverlay.setAttribute('viewBox', `0 0 ${naturalWidth} ${naturalHeight}`);
+        this.markerOverlay.setAttribute('viewBox', `0 0 ${baseWidth} ${baseHeight}`);
         
-        // Position overlay to match image position within container
-        // Since both are scaled together, the offset should be correct
-        this.markerOverlay.style.left = offsetX + 'px';
-        this.markerOverlay.style.top = offsetY + 'px';
+        // Position overlay at same position as image within container
+        // Both are direct children of imageContainerInner, so use offsetLeft/offsetTop
+        this.markerOverlay.style.left = this.image.offsetLeft + 'px';
+        this.markerOverlay.style.top = this.image.offsetTop + 'px';
     }
     
     zoomIn() {
@@ -194,24 +191,23 @@ class SeatMapper {
         const clampedX = Math.max(0, Math.min(x, displayedWidth));
         const clampedY = Math.max(0, Math.min(y, displayedHeight));
         
-        // Get natural image dimensions
-        const naturalWidth = this.image.naturalWidth;
-        const naturalHeight = this.image.naturalHeight;
+        // Get the BASE displayed size of the image (before CSS transform)
+        // This is the actual rendered size at 100% zoom
+        const baseWidth = this.image.offsetWidth;
+        const baseHeight = this.image.offsetHeight;
         
-        // Normalize coordinates relative to natural image size (0-1)
+        // Calculate the current zoom level from displayed vs base size
+        // displayedWidth = baseWidth * zoom
+        const zoom = displayedWidth / baseWidth;
+        
+        // Convert displayed coordinates to base coordinates (pre-transform)
+        const baseX = clampedX / zoom;
+        const baseY = clampedY / zoom;
+        
+        // Normalize coordinates relative to base size (0-1)
         // This ensures coordinates stay consistent regardless of zoom level
-        // The normalized coordinate represents the fraction across the natural image
-        // normalizedX = clampedX / displayedWidth (simple fraction of displayed image)
-        // But we want it relative to natural size, so:
-        // Since displayedWidth = naturalWidth * zoom, we can simplify:
-        // normalizedX = clampedX / displayedWidth = clampedX / (naturalWidth * zoom)
-        // But to make it relative to natural size (0-1), we need:
-        // normalizedX = (clampedX / zoom) / naturalWidth
-        const zoom = displayedWidth / naturalWidth;
-        const naturalX = clampedX / zoom;
-        const naturalY = clampedY / zoom;
-        const normalizedX = naturalX / naturalWidth;
-        const normalizedY = naturalY / naturalHeight;
+        const normalizedX = baseX / baseWidth;
+        const normalizedY = baseY / baseHeight;
         
         return {
             displayX: clampedX,
@@ -287,23 +283,21 @@ class SeatMapper {
         const rect = this.image.getBoundingClientRect();
         
         this.seats.forEach((seat) => {
-            // Convert normalized coordinates (0-1 relative to natural size) to overlay coordinates
-            // IMPORTANT: The overlay is inside imageContainerInner which has CSS transform scale applied
-            // So the overlay itself is being scaled. We need to set coordinates in the PRE-scaled space
-            // (natural coordinates), not post-scaled (displayed coordinates)
-            const naturalWidth = this.image.naturalWidth;
-            const naturalHeight = this.image.naturalHeight;
+            // Convert normalized coordinates (0-1) to overlay coordinates
+            // IMPORTANT: The overlay uses the BASE displayed size (before CSS transform)
+            // which may be smaller than natural size due to max-width/max-height constraints
+            const baseWidth = this.image.offsetWidth;
+            const baseHeight = this.image.offsetHeight;
             
-            // Convert normalized to natural coordinates
-            // Since the overlay is scaled by the container's transform, we use natural coordinates
-            // The transform will scale these to the correct displayed position
-            const naturalX = seat.normalizedX * naturalWidth;
-            const naturalY = seat.normalizedY * naturalHeight;
+            // Convert normalized to base displayed coordinates
+            // Since the overlay matches the image's base size, we multiply by base dimensions
+            const baseX = seat.normalizedX * baseWidth;
+            const baseY = seat.normalizedY * baseHeight;
             
-            // Set overlay coordinates in natural (pre-scaled) space
+            // Set overlay coordinates in base (pre-transform) space
             // The container's CSS transform will scale these to the correct displayed position
-            seat.displayX = naturalX;
-            seat.displayY = naturalY;
+            seat.displayX = baseX;
+            seat.displayY = baseY;
             
             // Create circle marker
             const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
