@@ -96,6 +96,16 @@ A web application for mapping and booking work areas (seats) in an office buildi
   - Export current floor's seats
   - Export all floors' seats together
 
+#### 8. LocalStorage Persistence ✅
+- ✅ **Auto-Save**: Seat mappings automatically saved to localStorage when:
+  - A new seat is added
+  - A seat is removed
+  - Seats are renumbered
+- ✅ **Auto-Load**: Seat mappings automatically restored from localStorage on page load
+- ✅ **Per-Floor Storage**: Each floor's seat data saved under a unique key
+- ✅ **Data Integrity**: Graceful handling of corrupted or missing data
+- ✅ **Clear Data**: Option to clear all saved mappings (via console or export functionality)
+
 ### Technical Implementation
 
 #### Coordinate System ✅
@@ -159,7 +169,6 @@ A web application for mapping and booking work areas (seats) in an office buildi
 - ⚠️ **Note**: PDF files require serving via HTTP server (not `file://` protocol) due to CORS restrictions
 
 ### Future Enhancements (Not Yet Implemented)
-- ⏳ Save/load mappings from localStorage
 - ⏳ Seat name/description editing
 - ⏳ Seat booking functionality
 - ⏳ Export to file (JSON/CSV)

@@ -1,6 +1,9 @@
 // Seat mapping application
 class SeatMapper {
     constructor() {
+        // LocalStorage key for persisting seat mappings
+        this.STORAGE_KEY = 'workarea_booking_seat_mappings';
+        
         // Floor configurations - add/modify floors here
         // Supported formats: .jpg, .jpeg, .png, .gif, .webp, .pdf
         this.floors = [
@@ -14,12 +17,10 @@ class SeatMapper {
         
         // Per-floor seat data: { floorId: { seats: [], nextSeatNumber: 1 } }
         this.floorData = {};
-        this.floors.forEach(floor => {
-            this.floorData[floor.id] = {
-                seats: [],
-                nextSeatNumber: 1
-            };
-        });
+        this.initializeFloorData();
+        
+        // Load saved data from localStorage
+        this.loadFromStorage();
         
         // DOM elements
         this.image = document.getElementById('floorImage');
@@ -30,6 +31,7 @@ class SeatMapper {
         this.seatList = document.getElementById('seatList');
         this.exportBtn = document.getElementById('exportBtn');
         this.exportAllBtn = document.getElementById('exportAllBtn');
+        this.clearAllBtn = document.getElementById('clearAllBtn');
         this.zoomInBtn = document.getElementById('zoomInBtn');
         this.zoomOutBtn = document.getElementById('zoomOutBtn');
         this.resetZoomBtn = document.getElementById('resetZoomBtn');
@@ -90,6 +92,98 @@ class SeatMapper {
         return this.currentFloor.file;
     }
     
+    // Initialize floor data structure for all floors
+    initializeFloorData() {
+        this.floors.forEach(floor => {
+            if (!this.floorData[floor.id]) {
+                this.floorData[floor.id] = {
+                    seats: [],
+                    nextSeatNumber: 1
+                };
+            }
+        });
+    }
+    
+    // Load seat mappings from localStorage
+    loadFromStorage() {
+        try {
+            const savedData = localStorage.getItem(this.STORAGE_KEY);
+            if (savedData) {
+                const parsed = JSON.parse(savedData);
+                
+                // Restore floor data for each floor
+                this.floors.forEach(floor => {
+                    if (parsed[floor.id]) {
+                        this.floorData[floor.id] = {
+                            seats: parsed[floor.id].seats || [],
+                            nextSeatNumber: parsed[floor.id].nextSeatNumber || 1
+                        };
+                    }
+                });
+                
+                console.log('Loaded seat mappings from localStorage');
+            }
+        } catch (error) {
+            console.warn('Failed to load seat mappings from localStorage:', error);
+            // If loading fails, keep the initialized empty data
+        }
+    }
+    
+    // Save seat mappings to localStorage
+    saveToStorage() {
+        try {
+            const dataToSave = {};
+            
+            this.floors.forEach(floor => {
+                dataToSave[floor.id] = {
+                    seats: this.floorData[floor.id].seats.map(seat => ({
+                        number: seat.number,
+                        normalizedX: seat.normalizedX,
+                        normalizedY: seat.normalizedY
+                    })),
+                    nextSeatNumber: this.floorData[floor.id].nextSeatNumber
+                };
+            });
+            
+            localStorage.setItem(this.STORAGE_KEY, JSON.stringify(dataToSave));
+        } catch (error) {
+            console.warn('Failed to save seat mappings to localStorage:', error);
+        }
+    }
+    
+    // Clear all saved mappings from localStorage
+    clearStorage() {
+        try {
+            localStorage.removeItem(this.STORAGE_KEY);
+            console.log('Cleared all seat mappings from localStorage');
+        } catch (error) {
+            console.warn('Failed to clear localStorage:', error);
+        }
+    }
+    
+    // Clear all seat data from all floors and storage
+    clearAllData() {
+        if (!confirm('Are you sure you want to clear ALL seat mappings from ALL floors? This cannot be undone.')) {
+            return;
+        }
+        
+        // Reset all floor data
+        this.floors.forEach(floor => {
+            this.floorData[floor.id] = {
+                seats: [],
+                nextSeatNumber: 1
+            };
+        });
+        
+        // Clear localStorage
+        this.clearStorage();
+        
+        // Update UI
+        this.updateUI();
+        
+        alert('All seat mappings have been cleared.');
+    }
+    
     init() {
         // Populate floor selector
         this.populateFloorSelector();
@@ -116,6 +210,11 @@ class SeatMapper {
         // Export all floors button
         this.exportAllBtn.addEventListener('click', () => {
             this.exportAllFloors();
+        });
+        
+        // Clear all data button
+        this.clearAllBtn.addEventListener('click', () => {
+            this.clearAllData();
         });
         
         // Zoom controls
@@ -565,6 +664,7 @@ class SeatMapper {
         };
         
         this.seats.push(seat);
+        this.saveToStorage();
         this.updateUI();
     }
     
@@ -594,6 +694,7 @@ class SeatMapper {
             this.seats.splice(closestSeat.index, 1);
             // Renumber remaining seats
             this.renumberSeats();
+            this.saveToStorage();
             this.updateUI();
         }
     }

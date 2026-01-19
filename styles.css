@@ -401,6 +401,14 @@ header p {
     box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
 }
 
+.clear-all-btn {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+}
+
+.clear-all-btn:hover {
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+}
+
 /* Scrollbar styling */
 .seat-list::-webkit-scrollbar {
     width: 8px;
