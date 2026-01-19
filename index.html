@@ -18,6 +18,10 @@
         <div class="main-content">
             <div class="image-container">
                 <div class="controls-row">
+                    <div class="floor-selector">
+                        <label for="floorSelect">Floor:</label>
+                        <select id="floorSelect" class="floor-select"></select>
+                    </div>
                     <div class="zoom-controls">
                         <button id="zoomOutBtn" class="zoom-btn" title="Zoom Out">−</button>
                         <span id="zoomLevel" class="zoom-level">100%</span>
@@ -49,11 +53,14 @@
             
             <div class="sidebar">
                 <div class="seat-list-panel">
-                    <h2>Mapped Seats</h2>
+                    <h2>Mapped Seats <span id="floorNameBadge" class="floor-badge"></span></h2>
                     <div class="seat-list" id="seatList">
                         <p class="empty-message">No seats mapped yet. Click on the floor plan to start.</p>
                     </div>
-                    <button id="exportBtn" class="export-btn" disabled>Export to Console</button>
+                    <div class="export-buttons">
+                        <button id="exportBtn" class="export-btn" disabled>Export Current Floor</button>
+                        <button id="exportAllBtn" class="export-btn export-all-btn">Export All Floors</button>
+                    </div>
                 </div>
             </div>
         </div>

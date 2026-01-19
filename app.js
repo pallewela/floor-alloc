@@ -1,12 +1,25 @@
 // Seat mapping application
 class SeatMapper {
     constructor() {
-        this.seats = [];
-        this.nextSeatNumber = 1;
-        
-        // Floor plan source - change this to switch between image and PDF
+        // Floor configurations - add/modify floors here
         // Supported formats: .jpg, .jpeg, .png, .gif, .webp, .pdf
-        this.floorPlanSource = 'floor_plan_18th.png';
+        this.floors = [
+            { id: 'floor_14', name: 'Floor 14', file: 'floor_plan_14th.png' },
+            { id: 'floor_15', name: 'Floor 15', file: 'floor_plan_15th.png' },
+            { id: 'floor_18', name: 'Floor 18', file: 'floor_plan_18th.png' }
+        ];
+        
+        // Current floor
+        this.currentFloorId = this.floors[0].id;
+        
+        // Per-floor seat data: { floorId: { seats: [], nextSeatNumber: 1 } }
+        this.floorData = {};
+        this.floors.forEach(floor => {
+            this.floorData[floor.id] = {
+                seats: [],
+                nextSeatNumber: 1
+            };
+        });
         
         // DOM elements
         this.image = document.getElementById('floorImage');
@@ -16,11 +29,14 @@ class SeatMapper {
         this.markerOverlay = document.getElementById('markerOverlay');
         this.seatList = document.getElementById('seatList');
         this.exportBtn = document.getElementById('exportBtn');
+        this.exportAllBtn = document.getElementById('exportAllBtn');
         this.zoomInBtn = document.getElementById('zoomInBtn');
         this.zoomOutBtn = document.getElementById('zoomOutBtn');
         this.resetZoomBtn = document.getElementById('resetZoomBtn');
         this.zoomLevelDisplay = document.getElementById('zoomLevel');
         this.updateOverlayBtn = document.getElementById('updateOverlayBtn');
+        this.floorSelect = document.getElementById('floorSelect');
+        this.floorNameBadge = document.getElementById('floorNameBadge');
         
         // Grid control elements
         this.gridToggleBtn = document.getElementById('gridToggleBtn');
@@ -49,17 +65,37 @@ class SeatMapper {
         this.init();
     }
     
+    // Getters for current floor data
+    get seats() {
+        return this.floorData[this.currentFloorId].seats;
+    }
+    
+    set seats(value) {
+        this.floorData[this.currentFloorId].seats = value;
+    }
+    
+    get nextSeatNumber() {
+        return this.floorData[this.currentFloorId].nextSeatNumber;
+    }
+    
+    set nextSeatNumber(value) {
+        this.floorData[this.currentFloorId].nextSeatNumber = value;
+    }
+    
+    get currentFloor() {
+        return this.floors.find(f => f.id === this.currentFloorId);
+    }
+    
+    get floorPlanSource() {
+        return this.currentFloor.file;
+    }
+    
     init() {
-        // Determine if source is PDF or image
-        this.isPDF = this.floorPlanSource.toLowerCase().endsWith('.pdf');
+        // Populate floor selector
+        this.populateFloorSelector();
         
-        if (this.isPDF) {
-            // Load PDF
-            this.loadPDF();
-        } else {
-            // Load image
-            this.loadImage();
-        }
+        // Load current floor
+        this.loadCurrentFloor();
         
         // Handle window resize
         window.addEventListener('resize', () => {
@@ -67,9 +103,19 @@ class SeatMapper {
             this.updateMarkers();
         });
         
-        // Export button
+        // Floor selector change
+        this.floorSelect.addEventListener('change', (e) => {
+            this.switchFloor(e.target.value);
+        });
+        
+        // Export button - current floor
         this.exportBtn.addEventListener('click', () => {
             this.exportToConsole();
+        });
+        
+        // Export all floors button
+        this.exportAllBtn.addEventListener('click', () => {
+            this.exportAllFloors();
         });
         
         // Zoom controls
@@ -102,6 +148,62 @@ class SeatMapper {
         this.gridIncreaseBtn.addEventListener('click', () => {
             this.increaseGridSize();
         });
+    }
+    
+    populateFloorSelector() {
+        // Clear existing options
+        this.floorSelect.innerHTML = '';
+        
+        // Add an option for each floor
+        this.floors.forEach(floor => {
+            const option = document.createElement('option');
+            option.value = floor.id;
+            option.textContent = floor.name;
+            if (floor.id === this.currentFloorId) {
+                option.selected = true;
+            }
+            this.floorSelect.appendChild(option);
+        });
+    }
+    
+    loadCurrentFloor() {
+        // Determine if source is PDF or image
+        this.isPDF = this.floorPlanSource.toLowerCase().endsWith('.pdf');
+        
+        // Update floor name badge
+        this.floorNameBadge.textContent = this.currentFloor.name;
+        
+        // Reset zoom when loading new floor
+        this.zoom = 1.0;
+        this.imageContainerInner.style.transform = `scale(${this.zoom})`;
+        this.zoomLevelDisplay.textContent = '100%';
+        
+        if (this.isPDF) {
+            this.loadPDF();
+        } else {
+            this.loadImage();
+        }
+    }
+    
+    switchFloor(floorId) {
+        // Check if floor exists
+        const floor = this.floors.find(f => f.id === floorId);
+        if (!floor) {
+            console.error('Floor not found:', floorId);
+            return;
+        }
+        
+        // Update current floor
+        this.currentFloorId = floorId;
+        
+        // Clear grid if enabled
+        if (this.gridEnabled) {
+            this.clearGrid();
+        }
+        
+        // Load the new floor
+        this.loadCurrentFloor();
+        this.updateUI();
     }
     
     loadImage() {
@@ -601,26 +703,72 @@ class SeatMapper {
     }
     
     exportToConsole() {
-        const exportData = this.seats.map(seat => ({
-            seatNumber: seat.number,
-            location: {
-                normalizedX: parseFloat(seat.normalizedX.toFixed(6)),
-                normalizedY: parseFloat(seat.normalizedY.toFixed(6))
-            },
-            displayCoordinates: {
-                x: Math.round(seat.displayX),
-                y: Math.round(seat.displayY)
-            }
-        }));
+        const floorName = this.currentFloor.name;
+        const exportData = {
+            floor: floorName,
+            floorId: this.currentFloorId,
+            totalSeats: this.seats.length,
+            seats: this.seats.map(seat => ({
+                seatNumber: seat.number,
+                location: {
+                    normalizedX: parseFloat(seat.normalizedX.toFixed(6)),
+                    normalizedY: parseFloat(seat.normalizedY.toFixed(6))
+                },
+                displayCoordinates: {
+                    x: Math.round(seat.displayX),
+                    y: Math.round(seat.displayY)
+                }
+            }))
+        };
         
-        console.log('=== Seat Mapping Export ===');
-        console.log(`Total Seats: ${exportData.length}`);
+        console.log(`=== Seat Mapping Export: ${floorName} ===`);
+        console.log(`Total Seats: ${exportData.totalSeats}`);
         console.log('Seat Data:', exportData);
         console.log('JSON Format:', JSON.stringify(exportData, null, 2));
         console.log('========================');
         
         // Also show an alert for user feedback
-        alert(`Exported ${exportData.length} seat(s) to console. Open browser DevTools (F12) to view.`);
+        alert(`Exported ${exportData.totalSeats} seat(s) from ${floorName} to console. Open browser DevTools (F12) to view.`);
+    }
+    
+    exportAllFloors() {
+        const allFloorsData = {
+            exportDate: new Date().toISOString(),
+            totalFloors: this.floors.length,
+            floors: this.floors.map(floor => {
+                const floorSeats = this.floorData[floor.id].seats;
+                return {
+                    floorId: floor.id,
+                    floorName: floor.name,
+                    floorPlanFile: floor.file,
+                    totalSeats: floorSeats.length,
+                    seats: floorSeats.map(seat => ({
+                        seatNumber: seat.number,
+                        location: {
+                            normalizedX: parseFloat(seat.normalizedX.toFixed(6)),
+                            normalizedY: parseFloat(seat.normalizedY.toFixed(6))
+                        },
+                        displayCoordinates: {
+                            x: Math.round(seat.displayX),
+                            y: Math.round(seat.displayY)
+                        }
+                    }))
+                };
+            })
+        };
+        
+        // Calculate total seats across all floors
+        const totalSeats = allFloorsData.floors.reduce((sum, floor) => sum + floor.totalSeats, 0);
+        
+        console.log('=== All Floors Seat Mapping Export ===');
+        console.log(`Total Floors: ${allFloorsData.totalFloors}`);
+        console.log(`Total Seats Across All Floors: ${totalSeats}`);
+        console.log('Export Data:', allFloorsData);
+        console.log('JSON Format:', JSON.stringify(allFloorsData, null, 2));
+        console.log('======================================');
+        
+        // Also show an alert for user feedback
+        alert(`Exported ${totalSeats} seat(s) from ${allFloorsData.totalFloors} floor(s) to console. Open browser DevTools (F12) to view.`);
     }
 }
 

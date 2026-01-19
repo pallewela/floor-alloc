@@ -79,6 +79,23 @@ A web application for mapping and booking work areas (seats) in an office buildi
   - Light gray grid lines
   - Subtle appearance that doesn't interfere with floor plan visibility
 
+#### 7. Multiple Floor Support ✅
+- ✅ **Floor Configuration**: Define multiple floors with their floor plan files
+  - Each floor has a name/label and associated floor plan file
+  - Supports both image and PDF floor plans per floor
+- ✅ **Floor Selector**: Dropdown or tab interface to switch between floors
+  - Shows current floor name
+  - Easy navigation between floors
+- ✅ **Per-Floor Seat Data**: Each floor maintains its own seat mappings
+  - Seats are stored separately per floor
+  - Switching floors loads that floor's seats
+- ✅ **Floor State Persistence**: 
+  - Seat mappings preserved when switching floors
+  - All floor data available for export
+- ✅ **Export Options**:
+  - Export current floor's seats
+  - Export all floors' seats together
+
 ### Technical Implementation
 
 #### Coordinate System ✅
@@ -142,7 +159,6 @@ A web application for mapping and booking work areas (seats) in an office buildi
 - ⚠️ **Note**: PDF files require serving via HTTP server (not `file://` protocol) due to CORS restrictions
 
 ### Future Enhancements (Not Yet Implemented)
-- ⏳ Multiple floor support
 - ⏳ Save/load mappings from localStorage
 - ⏳ Seat name/description editing
 - ⏳ Seat booking functionality
