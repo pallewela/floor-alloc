@@ -8,10 +8,13 @@ A web application for mapping and booking work areas (seats) in an office buildi
 ### ✅ Implemented Requirements
 
 #### 1. Floor Plan Display ✅
-- ✅ Display the floor plan image (e.g., `floor_15.jpg`) in the browser
-- ✅ Image displayed at a reasonable size with ability to see details
-- ✅ Image maintains aspect ratio
-- ✅ Image is centered within its container
+- ✅ Display the floor plan image (e.g., `floor_15.jpg`, `floor_plan_18th.png`) in the browser
+- ✅ **PDF Support**: Can also display PDF floor plans (e.g., `floor_plan_18th.pdf`)
+  - Uses PDF.js library for rendering
+  - Renders first page of PDF to canvas at 2x resolution for high DPI displays
+  - Automatically detects file type from extension
+- ✅ Image/PDF displayed at a reasonable size with ability to see details
+- ✅ Maintains aspect ratio
 - ✅ Responsive layout that adapts to window resizing
 
 #### 2. Interactive Seat Mapping ✅
@@ -49,24 +52,44 @@ A web application for mapping and booking work areas (seats) in an office buildi
 - ✅ **Zoom Controls**: 
   - Zoom In button (+)
   - Zoom Out button (-)
-  - Reset Zoom button (⌂)
+  - Reset Zoom button (🔍)
+  - Update Markers button (⟳) - manually refreshes marker overlay
   - Current zoom level display (percentage)
 - ✅ **Zoom Range**: 50% to 300% (0.5x to 3.0x)
 - ✅ **Zoom Step**: 10% increments
 - ✅ **Mouse Wheel Zoom**: Scroll wheel on the floor plan to zoom in/out
+- ✅ **Transform Origin**: Zoom originates from top-left for consistent positioning
 - ✅ **Coordinate Handling**: Coordinates remain accurate at all zoom levels
 - ✅ **Marker Alignment**: Markers stay correctly aligned with the floor plan when zooming
 - ✅ **Smooth Updates**: Overlay and markers update smoothly when zoom changes
 
+#### 6. Snap Grid ✅
+- ✅ **Grid Toggle**: Button to enable/disable snap grid overlay
+- ✅ **Visual Grid**: Displays a visual grid overlay on the floor plan when enabled
+  - Grid lines rendered as SVG for crisp display at any zoom level
+  - Semi-transparent lines that don't obstruct the floor plan
+- ✅ **Snap Behavior**: When enabled, marker positions snap to nearest grid intersection
+  - Snapping occurs when a seat is added
+  - Existing markers can be kept at their original positions
+- ✅ **Grid Size Control**: 
+  - Configurable grid cell size (default: 20px)
+  - Increase/decrease grid size buttons
+  - Current grid size display
+- ✅ **Grid Styling**:
+  - Light gray grid lines
+  - Subtle appearance that doesn't interfere with floor plan visibility
+
 ### Technical Implementation
 
 #### Coordinate System ✅
-- ✅ **Normalized Coordinates**: Coordinates stored as normalized values (0-1 range) relative to natural image dimensions
+- ✅ **Normalized Coordinates**: Coordinates stored as normalized values (0-1 range) relative to base displayed size
+- ✅ **Base Displayed Size**: Uses `offsetWidth`/`offsetHeight` (actual rendered size at 100% zoom before transforms)
+  - Accounts for CSS constraints like `max-width: 100%` that may make displayed size smaller than natural size
 - ✅ **Zoom Handling**: Coordinates are converted from displayed coordinates (at current zoom) to normalized coordinates
 - ✅ **Consistency**: Normalized coordinates ensure markers appear in the correct location regardless of zoom level
 - ✅ **Conversion Logic**:
-  - On click: Displayed coordinates → Natural coordinates → Normalized (0-1)
-  - On render: Normalized (0-1) → Natural coordinates → Displayed coordinates (at current zoom)
+  - On click: Displayed coordinates → Base coordinates (÷ zoom) → Normalized (0-1)
+  - On render: Normalized (0-1) → Base coordinates → Container scales to displayed position
 
 #### Marker Rendering ✅
 - ✅ **SVG Overlay**: Uses SVG overlay positioned absolutely over the image
@@ -95,21 +118,28 @@ A web application for mapping and booking work areas (seats) in an office buildi
 ### Implementation Details
 
 #### Files Structure
-- `index.html`: Main HTML structure
+- `index.html`: Main HTML structure with PDF.js library
 - `styles.css`: Complete styling with modern design
 - `app.js`: Full application logic (SeatMapper class)
-- `floor_15.jpg`: Floor plan image
+- Floor plan files (configurable in `app.js`):
+  - Supports: `.jpg`, `.jpeg`, `.png`, `.gif`, `.webp`, `.pdf`
+  - Examples: `floor_15.jpg`, `floor_plan_18th.png`, `floor_plan_18th.pdf`
 
 #### Key Features
 1. **Event Handling**: Proper event listeners for clicks, right-clicks, and mouse wheel
-2. **Image Loading**: Handles cached images and load errors gracefully
+2. **Floor Plan Loading**: 
+   - Handles cached images and load errors gracefully
+   - PDF rendering via PDF.js library
+   - Automatic format detection
 3. **Window Resize**: Updates overlay and markers on window resize
-4. **Zoom Transform**: Uses CSS transform scale for smooth zooming
-5. **Coordinate Math**: Accurate coordinate conversion accounting for zoom, centering, and transforms
+4. **Zoom Transform**: Uses CSS transform scale with top-left origin for smooth, consistent zooming
+5. **Coordinate Math**: Accurate coordinate conversion using base displayed size (accounts for CSS constraints)
+6. **Manual Refresh**: Update Markers button to manually refresh overlay positioning
 
 ### Browser Compatibility
 - ✅ Works in all modern browsers (Chrome, Firefox, Safari, Edge)
-- ✅ Uses standard web APIs (no external dependencies)
+- ✅ External dependency: PDF.js (loaded from CDN for PDF support)
+- ⚠️ **Note**: PDF files require serving via HTTP server (not `file://` protocol) due to CORS restrictions
 
 ### Future Enhancements (Not Yet Implemented)
 - ⏳ Multiple floor support

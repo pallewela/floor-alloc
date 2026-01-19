@@ -55,14 +55,27 @@ header p {
     align-self: stretch;
 }
 
-.zoom-controls {
+.controls-row {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    justify-content: center;
-    gap: 10px;
+    gap: 15px;
     padding: 10px;
     background: #f9f9f9;
     border-radius: 6px;
+    flex-wrap: wrap;
+}
+
+.zoom-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.grid-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .zoom-btn {
@@ -106,6 +119,48 @@ header p {
 
 .zoom-btn.update-btn:hover {
     background: #218838;
+}
+
+.zoom-btn.grid-btn {
+    background: #6c757d;
+    font-size: 18px;
+}
+
+.zoom-btn.grid-btn:hover {
+    background: #5a6268;
+}
+
+.zoom-btn.grid-btn.active {
+    background: #17a2b8;
+}
+
+.zoom-btn.grid-btn.active:hover {
+    background: #138496;
+}
+
+.zoom-btn.grid-size-btn {
+    background: #6c757d;
+    font-size: 14px;
+    width: 28px;
+    height: 28px;
+}
+
+.zoom-btn.grid-size-btn:hover {
+    background: #5a6268;
+}
+
+.grid-size-display {
+    min-width: 45px;
+    text-align: center;
+    font-weight: 600;
+    color: #333;
+    font-size: 12px;
+}
+
+.grid-overlay {
+    position: absolute;
+    pointer-events: none;
+    z-index: 5;
 }
 
 .zoom-level {

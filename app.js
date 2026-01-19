@@ -6,7 +6,7 @@ class SeatMapper {
         
         // Floor plan source - change this to switch between image and PDF
         // Supported formats: .jpg, .jpeg, .png, .gif, .webp, .pdf
-        this.floorPlanSource = 'floor_plan_18th.pdf';
+        this.floorPlanSource = 'floor_plan_18th.png';
         
         // DOM elements
         this.image = document.getElementById('floorImage');
@@ -22,6 +22,13 @@ class SeatMapper {
         this.zoomLevelDisplay = document.getElementById('zoomLevel');
         this.updateOverlayBtn = document.getElementById('updateOverlayBtn');
         
+        // Grid control elements
+        this.gridToggleBtn = document.getElementById('gridToggleBtn');
+        this.gridDecreaseBtn = document.getElementById('gridDecreaseBtn');
+        this.gridIncreaseBtn = document.getElementById('gridIncreaseBtn');
+        this.gridSizeDisplay = document.getElementById('gridSize');
+        this.gridOverlay = document.getElementById('gridOverlay');
+        
         // Floor plan element (will be set to either image or canvas)
         this.floorPlanElement = null;
         this.isPDF = false;
@@ -31,6 +38,13 @@ class SeatMapper {
         this.minZoom = 0.5;
         this.maxZoom = 3.0;
         this.zoomStep = 0.1;
+        
+        // Grid state
+        this.gridEnabled = false;
+        this.gridSize = 20; // pixels
+        this.minGridSize = 5;
+        this.maxGridSize = 100;
+        this.gridSizeStep = 5;
         
         this.init();
     }
@@ -74,6 +88,19 @@ class SeatMapper {
         // Update overlay button
         this.updateOverlayBtn.addEventListener('click', () => {
             this.updateUI();
+        });
+        
+        // Grid controls
+        this.gridToggleBtn.addEventListener('click', () => {
+            this.toggleGrid();
+        });
+        
+        this.gridDecreaseBtn.addEventListener('click', () => {
+            this.decreaseGridSize();
+        });
+        
+        this.gridIncreaseBtn.addEventListener('click', () => {
+            this.increaseGridSize();
         });
     }
     
@@ -217,6 +244,18 @@ class SeatMapper {
         // Both are direct children of imageContainerInner, so use offsetLeft/offsetTop
         this.markerOverlay.style.left = this.floorPlanElement.offsetLeft + 'px';
         this.markerOverlay.style.top = this.floorPlanElement.offsetTop + 'px';
+        
+        // Update grid overlay to match
+        this.gridOverlay.setAttribute('width', baseWidth);
+        this.gridOverlay.setAttribute('height', baseHeight);
+        this.gridOverlay.setAttribute('viewBox', `0 0 ${baseWidth} ${baseHeight}`);
+        this.gridOverlay.style.left = this.floorPlanElement.offsetLeft + 'px';
+        this.gridOverlay.style.top = this.floorPlanElement.offsetTop + 'px';
+        
+        // Redraw grid if enabled
+        if (this.gridEnabled) {
+            this.drawGrid();
+        }
     }
     
     zoomIn() {
@@ -229,6 +268,97 @@ class SeatMapper {
     
     resetZoom() {
         this.setZoom(1.0);
+    }
+    
+    // Grid methods
+    toggleGrid() {
+        this.gridEnabled = !this.gridEnabled;
+        
+        // Update button state
+        if (this.gridEnabled) {
+            this.gridToggleBtn.classList.add('active');
+            this.drawGrid();
+        } else {
+            this.gridToggleBtn.classList.remove('active');
+            this.clearGrid();
+        }
+    }
+    
+    increaseGridSize() {
+        if (this.gridSize < this.maxGridSize) {
+            this.gridSize = Math.min(this.gridSize + this.gridSizeStep, this.maxGridSize);
+            this.updateGridSizeDisplay();
+            if (this.gridEnabled) {
+                this.drawGrid();
+            }
+        }
+    }
+    
+    decreaseGridSize() {
+        if (this.gridSize > this.minGridSize) {
+            this.gridSize = Math.max(this.gridSize - this.gridSizeStep, this.minGridSize);
+            this.updateGridSizeDisplay();
+            if (this.gridEnabled) {
+                this.drawGrid();
+            }
+        }
+    }
+    
+    updateGridSizeDisplay() {
+        this.gridSizeDisplay.textContent = this.gridSize + 'px';
+    }
+    
+    drawGrid() {
+        // Clear existing grid
+        this.gridOverlay.innerHTML = '';
+        
+        const width = this.floorPlanElement.offsetWidth;
+        const height = this.floorPlanElement.offsetHeight;
+        
+        // Create grid lines
+        const fragment = document.createDocumentFragment();
+        
+        // Vertical lines
+        for (let x = 0; x <= width; x += this.gridSize) {
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line.setAttribute('x1', x);
+            line.setAttribute('y1', 0);
+            line.setAttribute('x2', x);
+            line.setAttribute('y2', height);
+            line.setAttribute('stroke', 'rgba(0, 0, 0, 0.15)');
+            line.setAttribute('stroke-width', '0.5');
+            fragment.appendChild(line);
+        }
+        
+        // Horizontal lines
+        for (let y = 0; y <= height; y += this.gridSize) {
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line.setAttribute('x1', 0);
+            line.setAttribute('y1', y);
+            line.setAttribute('x2', width);
+            line.setAttribute('y2', y);
+            line.setAttribute('stroke', 'rgba(0, 0, 0, 0.15)');
+            line.setAttribute('stroke-width', '0.5');
+            fragment.appendChild(line);
+        }
+        
+        this.gridOverlay.appendChild(fragment);
+    }
+    
+    clearGrid() {
+        this.gridOverlay.innerHTML = '';
+    }
+    
+    snapToGrid(x, y) {
+        if (!this.gridEnabled) {
+            return { x, y };
+        }
+        
+        // Snap to nearest grid intersection
+        const snappedX = Math.round(x / this.gridSize) * this.gridSize;
+        const snappedY = Math.round(y / this.gridSize) * this.gridSize;
+        
+        return { x: snappedX, y: snappedY };
     }
     
     setZoom(newZoom) {
@@ -303,12 +433,33 @@ class SeatMapper {
     addSeat(event) {
         const coords = this.getImageCoordinates(event);
         
+        // Get base dimensions for snapping calculation
+        const baseWidth = this.floorPlanElement.offsetWidth;
+        const baseHeight = this.floorPlanElement.offsetHeight;
+        
+        // Convert normalized coordinates to base coordinates for snapping
+        let baseX = coords.normalizedX * baseWidth;
+        let baseY = coords.normalizedY * baseHeight;
+        
+        // Apply snap to grid if enabled
+        const snapped = this.snapToGrid(baseX, baseY);
+        baseX = snapped.x;
+        baseY = snapped.y;
+        
+        // Clamp to bounds
+        baseX = Math.max(0, Math.min(baseX, baseWidth));
+        baseY = Math.max(0, Math.min(baseY, baseHeight));
+        
+        // Convert back to normalized coordinates
+        const normalizedX = baseX / baseWidth;
+        const normalizedY = baseY / baseHeight;
+        
         const seat = {
             number: this.nextSeatNumber++,
-            normalizedX: coords.normalizedX,
-            normalizedY: coords.normalizedY,
-            displayX: coords.displayX,
-            displayY: coords.displayY
+            normalizedX: normalizedX,
+            normalizedY: normalizedY,
+            displayX: baseX,
+            displayY: baseY
         };
         
         this.seats.push(seat);

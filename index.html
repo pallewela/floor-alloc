@@ -17,12 +17,20 @@
         
         <div class="main-content">
             <div class="image-container">
-                <div class="zoom-controls">
-                    <button id="zoomOutBtn" class="zoom-btn" title="Zoom Out">−</button>
-                    <span id="zoomLevel" class="zoom-level">100%</span>
-                    <button id="zoomInBtn" class="zoom-btn" title="Zoom In">+</button>
-                    <button id="resetZoomBtn" class="zoom-btn reset-btn" title="Reset Zoom">⛶</button>
-                    <button id="updateOverlayBtn" class="zoom-btn update-btn" title="Update Markers">⟳</button>
+                <div class="controls-row">
+                    <div class="zoom-controls">
+                        <button id="zoomOutBtn" class="zoom-btn" title="Zoom Out">−</button>
+                        <span id="zoomLevel" class="zoom-level">100%</span>
+                        <button id="zoomInBtn" class="zoom-btn" title="Zoom In">+</button>
+                        <button id="resetZoomBtn" class="zoom-btn reset-btn" title="Reset Zoom">⛶</button>
+                        <button id="updateOverlayBtn" class="zoom-btn update-btn" title="Update Markers">⟳</button>
+                    </div>
+                    <div class="grid-controls">
+                        <button id="gridToggleBtn" class="zoom-btn grid-btn" title="Toggle Snap Grid">⊞</button>
+                        <button id="gridDecreaseBtn" class="zoom-btn grid-size-btn" title="Decrease Grid Size">◂</button>
+                        <span id="gridSize" class="grid-size-display">20px</span>
+                        <button id="gridIncreaseBtn" class="zoom-btn grid-size-btn" title="Increase Grid Size">▸</button>
+                    </div>
                 </div>
                 <div class="image-wrapper" id="imageWrapper">
                     <div class="image-container-inner" id="imageContainerInner">
@@ -30,6 +38,7 @@
                         <canvas id="pdfCanvas" style="display: none;"></canvas>
                         <!-- Image element for JPG/PNG (hidden when using PDF) -->
                         <img id="floorImage" src="" alt="Floor Plan" style="display: none;">
+                        <svg id="gridOverlay" class="grid-overlay"></svg>
                         <svg id="markerOverlay" class="marker-overlay"></svg>
                     </div>
                 </div>
