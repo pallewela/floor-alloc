@@ -99,6 +99,15 @@ header p {
     background: #777;
 }
 
+.zoom-btn.update-btn {
+    background: #28a745;
+    font-size: 18px;
+}
+
+.zoom-btn.update-btn:hover {
+    background: #218838;
+}
+
 .zoom-level {
     min-width: 60px;
     text-align: center;

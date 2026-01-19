@@ -13,6 +13,7 @@ class SeatMapper {
         this.zoomOutBtn = document.getElementById('zoomOutBtn');
         this.resetZoomBtn = document.getElementById('resetZoomBtn');
         this.zoomLevelDisplay = document.getElementById('zoomLevel');
+        this.updateOverlayBtn = document.getElementById('updateOverlayBtn');
         
         // Zoom state
         this.zoom = 1.0;
@@ -73,6 +74,11 @@ class SeatMapper {
         
         this.resetZoomBtn.addEventListener('click', () => {
             this.resetZoom();
+        });
+        
+        // Update overlay button
+        this.updateOverlayBtn.addEventListener('click', () => {
+            this.updateUI();
         });
         
         // Mouse wheel zoom
