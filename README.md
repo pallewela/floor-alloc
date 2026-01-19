@@ -7,6 +7,7 @@ A web application for mapping and booking work areas (seats) in an office buildi
 ### Floor Plan Mapping
 - **Interactive Floor Plans**: Click on the floor plan to mark seat locations
 - **Visual Markers**: Each seat is marked with a numbered circle
+- **Drag to Reposition**: Click and drag markers to move them
 - **Seat List**: Real-time list showing all mapped seats with their coordinates
 - **Right-click to Remove**: Right-click on or near a marker to remove it
 
@@ -46,10 +47,11 @@ A web application for mapping and booking work areas (seats) in an office buildi
 1. Open `index.html` in a web browser (use a local server for PDF support)
 2. Select a floor from the dropdown
 3. Click anywhere on the floor plan to add a seat marker
-4. Right-click on or near a marker to remove it
-5. Use zoom controls or mouse wheel to zoom in/out
-6. Toggle snap grid for precise marker placement
-7. View the seat list in the right panel
+4. Drag a marker to reposition it
+5. Right-click on or near a marker to remove it
+6. Use zoom controls or mouse wheel to zoom in/out
+7. Toggle snap grid for precise marker placement
+8. View the seat list in the right panel
 8. Click export buttons to output mapping data (open DevTools with F12 to view)
 9. Use "Save to File" to download mappings as JSON for backup or sharing
 10. Use "Load from File" to import mappings from a previously saved JSON file

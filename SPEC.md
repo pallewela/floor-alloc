@@ -122,6 +122,15 @@ A web application for mapping and booking work areas (seats) in an office buildi
   - Only loads if no localStorage data exists (localStorage takes priority)
   - Useful for pre-configured deployments or shared default mappings
 
+#### 10. Drag to Reposition Markers ✅
+- ✅ **Drag Functionality**: Click and drag markers to reposition them
+  - Works with mouse drag on desktop
+  - Visual feedback during drag (cursor change, marker highlight)
+- ✅ **Snap to Grid**: Dragged markers snap to grid when snap grid is enabled
+- ✅ **Boundary Constraints**: Markers cannot be dragged outside the floor plan
+- ✅ **Auto-Save**: Position changes automatically saved to localStorage
+- ✅ **Zoom Compatible**: Drag works correctly at any zoom level
+
 ### Technical Implementation
 
 #### Coordinate System ✅
@@ -188,4 +197,3 @@ A web application for mapping and booking work areas (seats) in an office buildi
 - ⏳ Seat name/description editing
 - ⏳ Seat booking functionality
 - ⏳ Undo/redo functionality
-- ⏳ Drag to reposition markers

@@ -1,0 +1,143 @@
+{
+  "version": "1.0",
+  "exportDate": "2026-01-19T11:45:12.931Z",
+  "application": "Work Area Booking System",
+  "totalFloors": 3,
+  "floorConfiguration": [
+    {
+      "id": "floor_14",
+      "name": "Floor 14",
+      "file": "floor_plan_14th.png"
+    },
+    {
+      "id": "floor_15",
+      "name": "Floor 15",
+      "file": "floor_plan_15th.png"
+    },
+    {
+      "id": "floor_18",
+      "name": "Floor 18",
+      "file": "floor_plan_18th.png"
+    }
+  ],
+  "seatMappings": {
+    "floor_14": {
+      "nextSeatNumber": 3,
+      "totalSeats": 2,
+      "seats": [
+        {
+          "number": 1,
+          "normalizedX": 0.133745,
+          "normalizedY": 0.288288
+        },
+        {
+          "number": 2,
+          "normalizedX": 0.216049,
+          "normalizedY": 0.288288
+        }
+      ]
+    },
+    "floor_15": {
+      "nextSeatNumber": 19,
+      "totalSeats": 18,
+      "seats": [
+        {
+          "number": 1,
+          "normalizedX": 0.195473,
+          "normalizedY": 0.114236
+        },
+        {
+          "number": 2,
+          "normalizedX": 0.226337,
+          "normalizedY": 0.114236
+        },
+        {
+          "number": 3,
+          "normalizedX": 0.226337,
+          "normalizedY": 0.149385
+        },
+        {
+          "number": 4,
+          "normalizedX": 0.195473,
+          "normalizedY": 0.149385
+        },
+        {
+          "number": 5,
+          "normalizedX": 0.195473,
+          "normalizedY": 0.184534
+        },
+        {
+          "number": 6,
+          "normalizedX": 0.226337,
+          "normalizedY": 0.184534
+        },
+        {
+          "number": 7,
+          "normalizedX": 0.195473,
+          "normalizedY": 0.246046
+        },
+        {
+          "number": 8,
+          "normalizedX": 0.226337,
+          "normalizedY": 0.246046
+        },
+        {
+          "number": 9,
+          "normalizedX": 0.195473,
+          "normalizedY": 0.289982
+        },
+        {
+          "number": 10,
+          "normalizedX": 0.226337,
+          "normalizedY": 0.289982
+        },
+        {
+          "number": 11,
+          "normalizedX": 0.195473,
+          "normalizedY": 0.325132
+        },
+        {
+          "number": 12,
+          "normalizedX": 0.226337,
+          "normalizedY": 0.325132
+        },
+        {
+          "number": 13,
+          "normalizedX": 0.26749,
+          "normalizedY": 0.254833
+        },
+        {
+          "number": 14,
+          "normalizedX": 0.298354,
+          "normalizedY": 0.254833
+        },
+        {
+          "number": 15,
+          "normalizedX": 0.26749,
+          "normalizedY": 0.289982
+        },
+        {
+          "number": 16,
+          "normalizedX": 0.298354,
+          "normalizedY": 0.289982
+        },
+        {
+          "number": 17,
+          "normalizedX": 0.26749,
+          "normalizedY": 0.325132
+        },
+        {
+          "number": 18,
+          "normalizedX": 0.298354,
+          "normalizedY": 0.325132
+        }
+      ]
+    },
+    "floor_18": {
+      "nextSeatNumber": 1,
+      "totalSeats": 0,
+      "seats": []
+    }
+  },
+  "totalSeats": 20
+}

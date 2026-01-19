@@ -247,11 +247,33 @@ header p {
 
 .marker-circle {
     pointer-events: all;
-    cursor: pointer;
+    cursor: grab;
+    transition: transform 0.1s ease, filter 0.1s ease;
 }
 
 .marker-circle:hover {
     opacity: 0.8;
+    filter: brightness(1.1);
+}
+
+.marker-circle:active,
+.marker-circle.dragging {
+    cursor: grabbing;
+    filter: brightness(1.3);
+}
+
+.marker-circle.dragging {
+    stroke: #ffd700;
+    stroke-width: 2;
+}
+
+body.dragging-marker {
+    cursor: grabbing !important;
+    user-select: none;
+}
+
+body.dragging-marker * {
+    cursor: grabbing !important;
 }
 
 .instructions {

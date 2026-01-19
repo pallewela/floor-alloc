@@ -62,10 +62,16 @@ class SeatMapper {
         
         // Grid state
         this.gridEnabled = false;
-        this.gridSize = 20; // pixels
+        this.gridSize = 5; // pixels
         this.minGridSize = 5;
         this.maxGridSize = 100;
         this.gridSizeStep = 5;
+        
+        // Drag state
+        this.isDragging = false;
+        this.draggedSeat = null;
+        this.dragStartX = 0;
+        this.dragStartY = 0;
         
         this.init();
     }
@@ -244,11 +250,22 @@ class SeatMapper {
         
         // Load current floor
         this.loadCurrentFloor();
+
+        this.toggleGrid();
         
         // Handle window resize
         window.addEventListener('resize', () => {
             this.updateOverlaySize();
             this.updateMarkers();
+        });
+        
+        // Drag event handlers (attached to document for smooth dragging)
+        document.addEventListener('mousemove', (e) => {
+            this.handleDragMove(e);
+        });
+        
+        document.addEventListener('mouseup', (e) => {
+            this.handleDragEnd(e);
         });
         
         // Floor selector change
@@ -465,6 +482,9 @@ class SeatMapper {
             const delta = e.deltaY > 0 ? -this.zoomStep : this.zoomStep;
             this.setZoom(this.zoom + delta);
         }, { passive: false });
+        
+        // Update UI to show seat markers and list for the loaded floor
+        this.updateUI();
     }
     
     setupEventListeners() {
@@ -778,6 +798,111 @@ class SeatMapper {
         this.nextSeatNumber = this.seats.length + 1;
     }
     
+    // Drag handlers
+    handleDragStart(event, seatNumber) {
+        const seat = this.seats.find(s => s.number === seatNumber);
+        if (!seat) return;
+        
+        this.isDragging = true;
+        this.draggedSeat = seat;
+        this.dragStartX = event.clientX;
+        this.dragStartY = event.clientY;
+        
+        // Add dragging class to body for cursor
+        document.body.classList.add('dragging-marker');
+        
+        // Highlight the dragged marker
+        const circle = this.markerOverlay.querySelector(`circle[data-seat-number="${seatNumber}"]`);
+        if (circle) {
+            circle.classList.add('dragging');
+        }
+    }
+    
+    handleDragMove(event) {
+        if (!this.isDragging || !this.draggedSeat) return;
+        
+        event.preventDefault();
+        
+        // Get the floor plan's bounding rect (includes zoom transform)
+        const imageRect = this.floorPlanElement.getBoundingClientRect();
+        
+        // Calculate the new position
+        const clickX = event.clientX;
+        const clickY = event.clientY;
+        
+        // Get position relative to the image
+        let x = clickX - imageRect.left;
+        let y = clickY - imageRect.top;
+        
+        // Get the base dimensions and current zoom
+        const baseWidth = this.floorPlanElement.offsetWidth;
+        const baseHeight = this.floorPlanElement.offsetHeight;
+        const displayedWidth = imageRect.width;
+        const displayedHeight = imageRect.height;
+        const zoom = displayedWidth / baseWidth;
+        
+        // Convert to base coordinates
+        let baseX = x / zoom;
+        let baseY = y / zoom;
+        
+        // Apply snap to grid if enabled
+        const snapped = this.snapToGrid(baseX, baseY);
+        baseX = snapped.x;
+        baseY = snapped.y;
+        
+        // Clamp to bounds
+        baseX = Math.max(0, Math.min(baseX, baseWidth));
+        baseY = Math.max(0, Math.min(baseY, baseHeight));
+        
+        // Convert to normalized coordinates
+        const normalizedX = baseX / baseWidth;
+        const normalizedY = baseY / baseHeight;
+        
+        // Update the seat's position
+        this.draggedSeat.normalizedX = normalizedX;
+        this.draggedSeat.normalizedY = normalizedY;
+        this.draggedSeat.displayX = baseX;
+        this.draggedSeat.displayY = baseY;
+        
+        // Update just the marker position (not full updateMarkers for performance)
+        const circle = this.markerOverlay.querySelector(`circle[data-seat-number="${this.draggedSeat.number}"]`);
+        const text = this.markerOverlay.querySelector(`text[data-seat-number="${this.draggedSeat.number}"]`);
+        
+        if (circle) {
+            circle.setAttribute('cx', baseX);
+            circle.setAttribute('cy', baseY);
+        }
+        if (text) {
+            text.setAttribute('x', baseX);
+            text.setAttribute('y', baseY);
+        }
+    }
+    
+    handleDragEnd(event) {
+        if (!this.isDragging) return;
+        
+        // Remove dragging class
+        document.body.classList.remove('dragging-marker');
+        
+        // Remove highlight from marker
+        if (this.draggedSeat) {
+            const circle = this.markerOverlay.querySelector(`circle[data-seat-number="${this.draggedSeat.number}"]`);
+            if (circle) {
+                circle.classList.remove('dragging');
+            }
+        }
+        
+        // Save to storage
+        this.saveToStorage();
+        
+        // Update the seat list
+        this.updateSeatList();
+        
+        // Reset drag state
+        this.isDragging = false;
+        this.draggedSeat = null;
+    }
+    
     updateMarkers() {
         // Update overlay size and position first
         this.updateOverlaySize();
@@ -818,8 +943,19 @@ class SeatMapper {
             // Allow pointer events on circles for right-click removal
             circle.style.pointerEvents = 'all';
             
-            // Add right-click handler to circle - use seat number to find and remove
+            // Store seat number for event handlers
             const seatNumber = seat.number;
+            
+            // Add mousedown handler for drag start
+            circle.addEventListener('mousedown', (e) => {
+                if (e.button === 0) { // Left click only
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.handleDragStart(e, seatNumber);
+                }
+            });
+            
+            // Add right-click handler to circle - use seat number to find and remove
             circle.addEventListener('contextmenu', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -827,6 +963,7 @@ class SeatMapper {
                 if (seatIndex !== -1) {
                     this.seats.splice(seatIndex, 1);
                     this.renumberSeats();
+                    this.saveToStorage();
                     this.updateUI();
                 }
             });
@@ -841,6 +978,7 @@ class SeatMapper {
             text.setAttribute('font-size', '5');
             text.setAttribute('font-weight', 'bold');
             text.setAttribute('pointer-events', 'none');
+            text.setAttribute('data-seat-number', seat.number);
             text.textContent = seat.number;
             
             this.markerOverlay.appendChild(circle);
