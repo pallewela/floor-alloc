@@ -116,21 +116,27 @@ class SeatMapper {
     }
     
     updateOverlaySize() {
-        // Get the image's computed style to check for any offsets
-        const imageStyle = window.getComputedStyle(this.image);
         const imageRect = this.image.getBoundingClientRect();
         const containerRect = this.imageContainerInner.getBoundingClientRect();
+        const naturalWidth = this.image.naturalWidth;
+        const naturalHeight = this.image.naturalHeight;
         
-        // Calculate image position relative to container-inner using bounding rects
+        // Calculate image position relative to container-inner
         // This accounts for any transforms, margins, or positioning
         const offsetX = imageRect.left - containerRect.left;
         const offsetY = imageRect.top - containerRect.top;
         
-        // Set overlay size to match image exactly (accounting for zoom)
-        this.markerOverlay.setAttribute('width', imageRect.width);
-        this.markerOverlay.setAttribute('height', imageRect.height);
+        // IMPORTANT: The overlay is inside imageContainerInner which has CSS transform scale applied
+        // So we need to set the overlay size to the NATURAL (pre-scaled) size
+        // The container's transform will scale both the image and overlay together
+        this.markerOverlay.setAttribute('width', naturalWidth);
+        this.markerOverlay.setAttribute('height', naturalHeight);
         
-        // Position overlay to exactly match image position
+        // Set viewBox to match for proper coordinate system
+        this.markerOverlay.setAttribute('viewBox', `0 0 ${naturalWidth} ${naturalHeight}`);
+        
+        // Position overlay to match image position within container
+        // Since both are scaled together, the offset should be correct
         this.markerOverlay.style.left = offsetX + 'px';
         this.markerOverlay.style.top = offsetY + 'px';
     }
@@ -194,38 +200,13 @@ class SeatMapper {
         
         // Normalize coordinates relative to natural image size (0-1)
         // This ensures coordinates stay consistent regardless of zoom level
-        // Convert displayed coordinates to natural coordinates first
-        // zoom = displayedWidth / naturalWidth, so naturalX = displayedX / zoom
-        // normalizedX = naturalX / naturalWidth = (displayedX / zoom) / naturalWidth
-        // Since zoom = displayedWidth / naturalWidth:
-        // normalizedX = (displayedX / (displayedWidth / naturalWidth)) / naturalWidth
-        // normalizedX = (displayedX * naturalWidth / displayedWidth) / naturalWidth
-        // normalizedX = displayedX / displayedWidth
-        // 
-        // Wait, that gives the same result. But the key is: when we render, we need to use
-        // the current displayed size, not the stored displayed size.
-        // 
-        // Actually, the correct approach: store normalized relative to natural size
+        // The normalized coordinate represents the fraction across the natural image
+        // normalizedX = clampedX / displayedWidth (simple fraction of displayed image)
+        // But we want it relative to natural size, so:
+        // Since displayedWidth = naturalWidth * zoom, we can simplify:
+        // normalizedX = clampedX / displayedWidth = clampedX / (naturalWidth * zoom)
+        // But to make it relative to natural size (0-1), we need:
         // normalizedX = (clampedX / zoom) / naturalWidth
-        // where zoom = displayedWidth / naturalWidth
-        // So: normalizedX = clampedX / displayedWidth (same as above)
-        // 
-        // But when rendering: displayX = normalizedX * currentDisplayedWidth
-        // This should work because normalizedX represents the fraction across the image
-        
-        // Actually, I realize the issue: normalizedX = clampedX / displayedWidth gives us
-        // the position within the CURRENT displayed image. But we want position within the
-        // NATURAL image, which should be constant.
-        // 
-        // The correct formula: normalizedX = (clampedX / zoom) / naturalWidth
-        // where zoom = displayedWidth / naturalWidth
-        // normalizedX = (clampedX * naturalWidth / displayedWidth) / naturalWidth
-        // normalizedX = clampedX / displayedWidth
-        // 
-        // This is the same! So the math is correct. The issue must be elsewhere.
-        
-        // Let me try a different approach: store the actual natural coordinates
-        // zoom = displayedWidth / naturalWidth
         const zoom = displayedWidth / naturalWidth;
         const naturalX = clampedX / zoom;
         const naturalY = clampedY / zoom;
@@ -306,19 +287,23 @@ class SeatMapper {
         const rect = this.image.getBoundingClientRect();
         
         this.seats.forEach((seat) => {
-            // Convert normalized coordinates (0-1 relative to natural size) to displayed pixel coordinates
-            // normalizedX is relative to naturalWidth, so we convert to natural coords, then to displayed
+            // Convert normalized coordinates (0-1 relative to natural size) to overlay coordinates
+            // IMPORTANT: The overlay is inside imageContainerInner which has CSS transform scale applied
+            // So the overlay itself is being scaled. We need to set coordinates in the PRE-scaled space
+            // (natural coordinates), not post-scaled (displayed coordinates)
             const naturalWidth = this.image.naturalWidth;
             const naturalHeight = this.image.naturalHeight;
-            const zoom = rect.width / naturalWidth;
             
             // Convert normalized to natural coordinates
+            // Since the overlay is scaled by the container's transform, we use natural coordinates
+            // The transform will scale these to the correct displayed position
             const naturalX = seat.normalizedX * naturalWidth;
             const naturalY = seat.normalizedY * naturalHeight;
             
-            // Convert natural coordinates to displayed coordinates (accounting for current zoom)
-            seat.displayX = naturalX * zoom;
-            seat.displayY = naturalY * zoom;
+            // Set overlay coordinates in natural (pre-scaled) space
+            // The container's CSS transform will scale these to the correct displayed position
+            seat.displayX = naturalX;
+            seat.displayY = naturalY;
             
             // Create circle marker
             const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
