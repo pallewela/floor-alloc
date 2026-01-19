@@ -106,6 +106,22 @@ A web application for mapping and booking work areas (seats) in an office buildi
 - ✅ **Data Integrity**: Graceful handling of corrupted or missing data
 - ✅ **Clear Data**: Option to clear all saved mappings (via console or export functionality)
 
+#### 9. JSON File Export/Import ✅
+- ✅ **Export to JSON File**: Download seat mappings as a JSON file
+  - Exports all floors' data in a single file
+  - Includes metadata (export date, floor configuration)
+  - Human-readable formatted JSON
+- ✅ **Import from JSON File**: Load seat mappings from a JSON file
+  - File picker dialog for selecting JSON files
+  - Validates file format before importing
+  - Merges or replaces existing data (with confirmation)
+  - Handles missing floors gracefully
+- ✅ **Auto-Load from Default File**: Automatically load `seat-mappings.json` on startup
+  - Attempts to fetch `seat-mappings.json` from the application root
+  - Silently skips if file doesn't exist (no error shown)
+  - Only loads if no localStorage data exists (localStorage takes priority)
+  - Useful for pre-configured deployments or shared default mappings
+
 ### Technical Implementation
 
 #### Coordinate System ✅
@@ -171,6 +187,5 @@ A web application for mapping and booking work areas (seats) in an office buildi
 ### Future Enhancements (Not Yet Implemented)
 - ⏳ Seat name/description editing
 - ⏳ Seat booking functionality
-- ⏳ Export to file (JSON/CSV)
 - ⏳ Undo/redo functionality
 - ⏳ Drag to reposition markers

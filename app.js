@@ -20,7 +20,7 @@ class SeatMapper {
         this.initializeFloorData();
         
         // Load saved data from localStorage
-        this.loadFromStorage();
+        this.hasStoredData = this.loadFromStorage();
         
         // DOM elements
         this.image = document.getElementById('floorImage');
@@ -32,6 +32,9 @@ class SeatMapper {
         this.exportBtn = document.getElementById('exportBtn');
         this.exportAllBtn = document.getElementById('exportAllBtn');
         this.clearAllBtn = document.getElementById('clearAllBtn');
+        this.saveToFileBtn = document.getElementById('saveToFileBtn');
+        this.loadFromFileBtn = document.getElementById('loadFromFileBtn');
+        this.fileInput = document.getElementById('fileInput');
         this.zoomInBtn = document.getElementById('zoomInBtn');
         this.zoomOutBtn = document.getElementById('zoomOutBtn');
         this.resetZoomBtn = document.getElementById('resetZoomBtn');
@@ -105,11 +108,15 @@ class SeatMapper {
     }
     
     // Load seat mappings from localStorage
+    // Returns true if data was loaded, false otherwise
     loadFromStorage() {
         try {
             const savedData = localStorage.getItem(this.STORAGE_KEY);
             if (savedData) {
                 const parsed = JSON.parse(savedData);
+                
+                // Check if there's any actual seat data
+                let hasSeats = false;
                 
                 // Restore floor data for each floor
                 this.floors.forEach(floor => {
@@ -118,14 +125,56 @@ class SeatMapper {
                             seats: parsed[floor.id].seats || [],
                             nextSeatNumber: parsed[floor.id].nextSeatNumber || 1
                         };
+                        if (parsed[floor.id].seats && parsed[floor.id].seats.length > 0) {
+                            hasSeats = true;
+                        }
                     }
                 });
                 
-                console.log('Loaded seat mappings from localStorage');
+                if (hasSeats) {
+                    console.log('Loaded seat mappings from localStorage');
+                    return true;
+                }
             }
         } catch (error) {
             console.warn('Failed to load seat mappings from localStorage:', error);
             // If loading fails, keep the initialized empty data
+        }
+        return false;
+    }
+    
+    // Load seat mappings from default file (seat-mappings.json)
+    // This is called only if localStorage is empty
+    async loadFromDefaultFile() {
+        try {
+            const response = await fetch('seat-mappings.json');
+            
+            if (!response.ok) {
+                // File doesn't exist or can't be fetched - this is normal, just skip
+                return false;
+            }
+            
+            const importData = await response.json();
+            
+            // Validate the data
+            if (!this.validateImportData(importData)) {
+                console.warn('seat-mappings.json has invalid format, skipping');
+                return false;
+            }
+            
+            // Import the data
+            this.importSeatMappings(importData);
+            
+            // Save to localStorage so it persists
+            this.saveToStorage();
+            
+            console.log('Loaded seat mappings from seat-mappings.json');
+            return true;
+            
+        } catch (error) {
+            // Silently fail - file might not exist or network error
+            // This is expected behavior when no default file is present
+            return false;
         }
     }
     
@@ -184,7 +233,12 @@ class SeatMapper {
         alert('All seat mappings have been cleared.');
     }
     
-    init() {
+    async init() {
+        // If no localStorage data, try loading from default file
+        if (!this.hasStoredData) {
+            await this.loadFromDefaultFile();
+        }
+        
         // Populate floor selector
         this.populateFloorSelector();
         
@@ -210,6 +264,23 @@ class SeatMapper {
         // Export all floors button
         this.exportAllBtn.addEventListener('click', () => {
             this.exportAllFloors();
+        });
+        
+        // Save to file button
+        this.saveToFileBtn.addEventListener('click', () => {
+            this.saveToFile();
+        });
+        
+        // Load from file button
+        this.loadFromFileBtn.addEventListener('click', () => {
+            this.fileInput.click();
+        });
+        
+        // File input change handler
+        this.fileInput.addEventListener('change', (e) => {
+            this.loadFromFile(e.target.files[0]);
+            // Reset file input so the same file can be selected again
+            this.fileInput.value = '';
         });
         
         // Clear all data button
@@ -870,6 +941,182 @@ class SeatMapper {
         
         // Also show an alert for user feedback
         alert(`Exported ${totalSeats} seat(s) from ${allFloorsData.totalFloors} floor(s) to console. Open browser DevTools (F12) to view.`);
+    }
+    
+    // Save all floor data to a JSON file
+    saveToFile() {
+        const exportData = {
+            version: '1.0',
+            exportDate: new Date().toISOString(),
+            application: 'Work Area Booking System',
+            totalFloors: this.floors.length,
+            floorConfiguration: this.floors.map(floor => ({
+                id: floor.id,
+                name: floor.name,
+                file: floor.file
+            })),
+            seatMappings: {}
+        };
+        
+        // Add seat data for each floor
+        this.floors.forEach(floor => {
+            const floorSeats = this.floorData[floor.id].seats;
+            exportData.seatMappings[floor.id] = {
+                nextSeatNumber: this.floorData[floor.id].nextSeatNumber,
+                totalSeats: floorSeats.length,
+                seats: floorSeats.map(seat => ({
+                    number: seat.number,
+                    normalizedX: parseFloat(seat.normalizedX.toFixed(6)),
+                    normalizedY: parseFloat(seat.normalizedY.toFixed(6))
+                }))
+            };
+        });
+        
+        // Calculate total seats
+        const totalSeats = Object.values(exportData.seatMappings)
+            .reduce((sum, floor) => sum + floor.totalSeats, 0);
+        exportData.totalSeats = totalSeats;
+        
+        // Create and download the file
+        const jsonString = JSON.stringify(exportData, null, 2);
+        const blob = new Blob([jsonString], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `seat-mappings-${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        console.log(`Saved ${totalSeats} seat(s) from ${this.floors.length} floor(s) to file.`);
+    }
+    
+    // Load floor data from a JSON file
+    loadFromFile(file) {
+        if (!file) {
+            return;
+        }
+        
+        const reader = new FileReader();
+        
+        reader.onload = (e) => {
+            try {
+                const importData = JSON.parse(e.target.result);
+                
+                // Validate the file format
+                if (!this.validateImportData(importData)) {
+                    alert('Invalid file format. Please select a valid seat mappings JSON file.');
+                    return;
+                }
+                
+                // Ask user how to handle the import
+                const action = confirm(
+                    'How do you want to import the data?\n\n' +
+                    'OK = Replace all existing data\n' +
+                    'Cancel = Abort import'
+                );
+                
+                if (!action) {
+                    return;
+                }
+                
+                // Import the data
+                this.importSeatMappings(importData);
+                
+                // Save to localStorage
+                this.saveToStorage();
+                
+                // Update UI
+                this.updateUI();
+                
+                // Count imported seats
+                let importedSeats = 0;
+                let importedFloors = 0;
+                
+                if (importData.seatMappings) {
+                    for (const floorId in importData.seatMappings) {
+                        if (this.floorData[floorId]) {
+                            importedSeats += importData.seatMappings[floorId].seats?.length || 0;
+                            importedFloors++;
+                        }
+                    }
+                }
+                
+                alert(`Successfully imported ${importedSeats} seat(s) from ${importedFloors} floor(s).`);
+                
+            } catch (error) {
+                console.error('Error parsing JSON file:', error);
+                alert('Error reading file. Please ensure it is a valid JSON file.');
+            }
+        };
+        
+        reader.onerror = () => {
+            alert('Error reading file. Please try again.');
+        };
+        
+        reader.readAsText(file);
+    }
+    
+    // Validate imported data structure
+    validateImportData(data) {
+        // Check basic structure
+        if (!data || typeof data !== 'object') {
+            return false;
+        }
+        
+        // Check for seat mappings
+        if (!data.seatMappings || typeof data.seatMappings !== 'object') {
+            return false;
+        }
+        
+        // Validate seat data structure for each floor
+        for (const floorId in data.seatMappings) {
+            const floorData = data.seatMappings[floorId];
+            if (!floorData || !Array.isArray(floorData.seats)) {
+                return false;
+            }
+            
+            // Validate each seat
+            for (const seat of floorData.seats) {
+                if (typeof seat.number !== 'number' ||
+                    typeof seat.normalizedX !== 'number' ||
+                    typeof seat.normalizedY !== 'number') {
+                    return false;
+                }
+            }
+        }
+        
+        return true;
+    }
+    
+    // Import seat mappings from validated data
+    importSeatMappings(importData) {
+        // Process each floor in the import data
+        for (const floorId in importData.seatMappings) {
+            // Only import if the floor exists in current configuration
+            if (this.floorData[floorId]) {
+                const importFloorData = importData.seatMappings[floorId];
+                
+                // Replace floor data
+                this.floorData[floorId] = {
+                    seats: importFloorData.seats.map(seat => ({
+                        number: seat.number,
+                        normalizedX: seat.normalizedX,
+                        normalizedY: seat.normalizedY,
+                        displayX: 0, // Will be calculated when markers are updated
+                        displayY: 0
+                    })),
+                    nextSeatNumber: importFloorData.nextSeatNumber || 
+                        (importFloorData.seats.length > 0 
+                            ? Math.max(...importFloorData.seats.map(s => s.number)) + 1 
+                            : 1)
+                };
+            } else {
+                console.warn(`Floor "${floorId}" in import file does not exist in current configuration. Skipping.`);
+            }
+        }
     }
 }
 

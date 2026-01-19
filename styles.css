@@ -401,6 +401,20 @@ header p {
     box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
 }
 
+.file-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.file-btn {
+    flex: 1;
+    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+}
+
+.file-btn:hover {
+    box-shadow: 0 4px 12px rgba(23, 162, 184, 0.4);
+}
+
 .clear-all-btn {
     background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
 }

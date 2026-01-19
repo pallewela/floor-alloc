@@ -10,10 +10,10 @@
 </head>
 <body>
     <div class="container">
-        <header>
+        <!-- <header>
             <h1>Work Area Booking System</h1>
             <p>Click on the floor plan to mark seat locations</p>
-        </header>
+        </header> -->
         
         <div class="main-content">
             <div class="image-container">
@@ -60,6 +60,11 @@
                     <div class="export-buttons">
                         <button id="exportBtn" class="export-btn" disabled>Export Current Floor</button>
                         <button id="exportAllBtn" class="export-btn export-all-btn">Export All Floors</button>
+                        <div class="file-buttons">
+                            <button id="saveToFileBtn" class="export-btn file-btn">💾 Save to File</button>
+                            <button id="loadFromFileBtn" class="export-btn file-btn">📂 Load from File</button>
+                            <input type="file" id="fileInput" accept=".json" style="display: none;">
+                        </div>
                         <button id="clearAllBtn" class="export-btn clear-all-btn">Clear All Data</button>
                     </div>
                 </div>

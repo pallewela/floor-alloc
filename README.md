@@ -28,11 +28,14 @@ A web application for mapping and booking work areas (seats) in an office buildi
 ### Data Persistence
 - **Auto-Save**: Seat mappings automatically saved to localStorage
 - **Auto-Load**: Mappings restored when you return to the page
+- **Default Mappings**: Automatically loads from `seat-mappings.json` if present (when no localStorage data exists)
 - **Clear All Data**: Option to reset all mappings across all floors
 
 ### Export Options
 - **Export Current Floor**: Output current floor's seat data to console
 - **Export All Floors**: Output all floors' seat data to console
+- **Save to File**: Download all seat mappings as a JSON file
+- **Load from File**: Import seat mappings from a JSON file
 
 ### File Format Support
 - **Images**: JPG, PNG, GIF, WebP
@@ -48,6 +51,8 @@ A web application for mapping and booking work areas (seats) in an office buildi
 6. Toggle snap grid for precise marker placement
 7. View the seat list in the right panel
 8. Click export buttons to output mapping data (open DevTools with F12 to view)
+9. Use "Save to File" to download mappings as JSON for backup or sharing
+10. Use "Load from File" to import mappings from a previously saved JSON file
 
 ## Configuration
 
@@ -68,6 +73,16 @@ Each floor requires:
 - `name`: Display name shown in the UI
 - `file`: Floor plan file path (image or PDF)
 
+### Default Seat Mappings
+
+To provide default seat mappings, create a `seat-mappings.json` file in the application root. This file will be automatically loaded on startup if no localStorage data exists.
+
+You can create this file by:
+1. Mapping seats manually in the application
+2. Clicking "Save to File" to download the mappings
+3. Renaming the downloaded file to `seat-mappings.json`
+4. Placing it in the same directory as `index.html`
+
 ## File Structure
 
 - `index.html` - Main HTML structure
@@ -75,6 +90,7 @@ Each floor requires:
 - `app.js` - Application logic
 - `SPEC.md` - Detailed specification
 - `floor_plan_*.png/jpg/pdf` - Floor plan files
+- `seat-mappings.json` - (Optional) Default seat mappings, auto-loaded on startup
 
 ## Technical Details
 
