@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Work Area Booking - Floor Mapping</title>
     <link rel="stylesheet" href="styles.css">
+    <!-- PDF.js library for rendering PDF files -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 </head>
 <body>
     <div class="container">
@@ -24,7 +26,10 @@
                 </div>
                 <div class="image-wrapper" id="imageWrapper">
                     <div class="image-container-inner" id="imageContainerInner">
-                        <img id="floorImage" src="floor_15.jpg" alt="Floor 15 Plan">
+                        <!-- Canvas for PDF rendering (hidden when using image) -->
+                        <canvas id="pdfCanvas" style="display: none;"></canvas>
+                        <!-- Image element for JPG/PNG (hidden when using PDF) -->
+                        <img id="floorImage" src="" alt="Floor Plan" style="display: none;">
                         <svg id="markerOverlay" class="marker-overlay"></svg>
                     </div>
                 </div>

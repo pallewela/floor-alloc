@@ -3,7 +3,14 @@ class SeatMapper {
     constructor() {
         this.seats = [];
         this.nextSeatNumber = 1;
+        
+        // Floor plan source - change this to switch between image and PDF
+        // Supported formats: .jpg, .jpeg, .png, .gif, .webp, .pdf
+        this.floorPlanSource = 'floor_plan_18th.pdf';
+        
+        // DOM elements
         this.image = document.getElementById('floorImage');
+        this.pdfCanvas = document.getElementById('pdfCanvas');
         this.imageWrapper = document.getElementById('imageWrapper');
         this.imageContainerInner = document.getElementById('imageContainerInner');
         this.markerOverlay = document.getElementById('markerOverlay');
@@ -15,6 +22,10 @@ class SeatMapper {
         this.zoomLevelDisplay = document.getElementById('zoomLevel');
         this.updateOverlayBtn = document.getElementById('updateOverlayBtn');
         
+        // Floor plan element (will be set to either image or canvas)
+        this.floorPlanElement = null;
+        this.isPDF = false;
+        
         // Zoom state
         this.zoom = 1.0;
         this.minZoom = 0.5;
@@ -25,32 +36,16 @@ class SeatMapper {
     }
     
     init() {
-        // Check if image is already loaded (cached images)
-        if (this.image.complete && this.image.naturalHeight !== 0) {
-            this.setupEventListeners();
-            this.updateOverlaySize();
-        } else {
-            // Wait for image to load to get proper dimensions
-            this.image.onload = () => {
-                this.setupEventListeners();
-                this.updateOverlaySize();
-            };
-            
-            // Handle image load error
-            this.image.onerror = () => {
-                console.error('Failed to load floor plan image');
-                alert('Error: Could not load floor plan image. Please check that floor_15.jpg exists.');
-            };
-        }
+        // Determine if source is PDF or image
+        this.isPDF = this.floorPlanSource.toLowerCase().endsWith('.pdf');
         
-        // Fallback: set up listeners after a short delay in case image load event doesn't fire
-        setTimeout(() => {
-            if (!this.imageWrapper.hasAttribute('data-listeners-setup')) {
-                this.setupEventListeners();
-                this.updateOverlaySize();
-                this.imageWrapper.setAttribute('data-listeners-setup', 'true');
-            }
-        }, 100);
+        if (this.isPDF) {
+            // Load PDF
+            this.loadPDF();
+        } else {
+            // Load image
+            this.loadImage();
+        }
         
         // Handle window resize
         window.addEventListener('resize', () => {
@@ -80,6 +75,90 @@ class SeatMapper {
         this.updateOverlayBtn.addEventListener('click', () => {
             this.updateUI();
         });
+    }
+    
+    loadImage() {
+        // Use the image element
+        this.floorPlanElement = this.image;
+        this.image.style.display = 'block';
+        this.pdfCanvas.style.display = 'none';
+        this.image.src = this.floorPlanSource;
+        
+        // Check if image is already loaded (cached images)
+        if (this.image.complete && this.image.naturalHeight !== 0) {
+            this.onFloorPlanLoaded();
+        } else {
+            // Wait for image to load
+            this.image.onload = () => {
+                this.onFloorPlanLoaded();
+            };
+            
+            // Handle image load error
+            this.image.onerror = () => {
+                console.error('Failed to load floor plan image');
+                alert(`Error: Could not load floor plan image. Please check that ${this.floorPlanSource} exists.`);
+            };
+        }
+    }
+    
+    async loadPDF() {
+        try {
+            // Configure PDF.js worker
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+            
+            // Load the PDF document
+            const loadingTask = pdfjsLib.getDocument(this.floorPlanSource);
+            const pdf = await loadingTask.promise;
+            
+            // Get the first page
+            const page = await pdf.getPage(1);
+            
+            // Set scale for good quality rendering (2x for high DPI displays)
+            const scale = 2;
+            const viewport = page.getViewport({ scale });
+            
+            // Set canvas dimensions
+            this.pdfCanvas.width = viewport.width;
+            this.pdfCanvas.height = viewport.height;
+            
+            // Set display size (CSS pixels)
+            this.pdfCanvas.style.width = (viewport.width / scale) + 'px';
+            this.pdfCanvas.style.height = (viewport.height / scale) + 'px';
+            
+            // Get canvas context
+            const context = this.pdfCanvas.getContext('2d');
+            
+            // Render the page to canvas
+            const renderContext = {
+                canvasContext: context,
+                viewport: viewport
+            };
+            
+            await page.render(renderContext).promise;
+            
+            // Show canvas, hide image
+            this.pdfCanvas.style.display = 'block';
+            this.image.style.display = 'none';
+            
+            // Use canvas as the floor plan element
+            this.floorPlanElement = this.pdfCanvas;
+            
+            // Set natural dimensions for coordinate calculations
+            // Use the CSS display size (not the high-res canvas size)
+            this.pdfCanvas.naturalWidth = viewport.width / scale;
+            this.pdfCanvas.naturalHeight = viewport.height / scale;
+            
+            this.onFloorPlanLoaded();
+            
+        } catch (error) {
+            console.error('Failed to load PDF:', error);
+            alert(`Error: Could not load PDF. Please check that ${this.floorPlanSource} exists and is a valid PDF.`);
+        }
+    }
+    
+    onFloorPlanLoaded() {
+        this.setupEventListeners();
+        this.updateOverlaySize();
         
         // Mouse wheel zoom
         this.imageWrapper.addEventListener('wheel', (e) => {
@@ -97,16 +176,18 @@ class SeatMapper {
         
         // Left click to add seat - attach to wrapper so clicks work anywhere
         this.imageWrapper.addEventListener('click', (e) => {
-            // Only process if click is on the image, wrapper, or container inner (not on markers)
-            if (e.target === this.image || e.target === this.imageWrapper || e.target === this.imageContainerInner) {
+            // Only process if click is on the floor plan element, wrapper, or container inner (not on markers)
+            if (e.target === this.floorPlanElement || e.target === this.image || e.target === this.pdfCanvas || 
+                e.target === this.imageWrapper || e.target === this.imageContainerInner) {
                 this.addSeat(e);
             }
         });
         
         // Right click to remove seat
         this.imageWrapper.addEventListener('contextmenu', (e) => {
-            // Only process if click is on the image, wrapper, or container inner (not on markers)
-            if (e.target === this.image || e.target === this.imageWrapper || e.target === this.imageContainerInner) {
+            // Only process if click is on the floor plan element, wrapper, or container inner (not on markers)
+            if (e.target === this.floorPlanElement || e.target === this.image || e.target === this.pdfCanvas || 
+                e.target === this.imageWrapper || e.target === this.imageContainerInner) {
                 e.preventDefault();
                 this.removeSeatAtPosition(e);
             }
@@ -120,22 +201,22 @@ class SeatMapper {
         // This is the actual rendered size at 100% zoom, which may be smaller than
         // natural size due to max-width/max-height CSS constraints
         // offsetWidth/offsetHeight give us this pre-transform size
-        const baseWidth = this.image.offsetWidth;
-        const baseHeight = this.image.offsetHeight;
+        const baseWidth = this.floorPlanElement.offsetWidth;
+        const baseHeight = this.floorPlanElement.offsetHeight;
         
         // IMPORTANT: The overlay is inside imageContainerInner which has CSS transform scale applied
-        // We need to set the overlay size to match the IMAGE's base size (not natural size)
-        // The container's transform will scale both the image and overlay together
+        // We need to set the overlay size to match the floor plan's base size (not natural size)
+        // The container's transform will scale both the floor plan and overlay together
         this.markerOverlay.setAttribute('width', baseWidth);
         this.markerOverlay.setAttribute('height', baseHeight);
         
         // Set viewBox to match for proper coordinate system
         this.markerOverlay.setAttribute('viewBox', `0 0 ${baseWidth} ${baseHeight}`);
         
-        // Position overlay at same position as image within container
+        // Position overlay at same position as floor plan within container
         // Both are direct children of imageContainerInner, so use offsetLeft/offsetTop
-        this.markerOverlay.style.left = this.image.offsetLeft + 'px';
-        this.markerOverlay.style.top = this.image.offsetTop + 'px';
+        this.markerOverlay.style.left = this.floorPlanElement.offsetLeft + 'px';
+        this.markerOverlay.style.top = this.floorPlanElement.offsetTop + 'px';
     }
     
     zoomIn() {
@@ -156,7 +237,7 @@ class SeatMapper {
         
         // Apply zoom transform
         this.imageContainerInner.style.transform = `scale(${this.zoom})`;
-        this.imageContainerInner.style.transformOrigin = 'center center';
+        this.imageContainerInner.style.transformOrigin = 'top left';
         
         // Update zoom level display
         this.zoomLevelDisplay.textContent = Math.round(this.zoom * 100) + '%';
@@ -172,29 +253,29 @@ class SeatMapper {
     }
     
     getImageCoordinates(event) {
-        const imageRect = this.image.getBoundingClientRect();
+        const floorPlanRect = this.floorPlanElement.getBoundingClientRect();
         
         // Get click position relative to viewport
         const clickX = event.clientX;
         const clickY = event.clientY;
         
-        // Calculate click position relative to the image's bounding rect
-        // imageRect already accounts for zoom, centering, and transforms
-        const x = clickX - imageRect.left;
-        const y = clickY - imageRect.top;
+        // Calculate click position relative to the floor plan's bounding rect
+        // floorPlanRect already accounts for zoom, centering, and transforms
+        const x = clickX - floorPlanRect.left;
+        const y = clickY - floorPlanRect.top;
         
         // Calculate actual displayed dimensions (zoomed)
-        const displayedWidth = imageRect.width;
-        const displayedHeight = imageRect.height;
+        const displayedWidth = floorPlanRect.width;
+        const displayedHeight = floorPlanRect.height;
         
-        // Clamp coordinates to image bounds
+        // Clamp coordinates to floor plan bounds
         const clampedX = Math.max(0, Math.min(x, displayedWidth));
         const clampedY = Math.max(0, Math.min(y, displayedHeight));
         
-        // Get the BASE displayed size of the image (before CSS transform)
+        // Get the BASE displayed size of the floor plan (before CSS transform)
         // This is the actual rendered size at 100% zoom
-        const baseWidth = this.image.offsetWidth;
-        const baseHeight = this.image.offsetHeight;
+        const baseWidth = this.floorPlanElement.offsetWidth;
+        const baseHeight = this.floorPlanElement.offsetHeight;
         
         // Calculate the current zoom level from displayed vs base size
         // displayedWidth = baseWidth * zoom
@@ -279,18 +360,18 @@ class SeatMapper {
         // Clear existing markers
         this.markerOverlay.innerHTML = '';
         
-        // Update display coordinates based on current image size
-        const rect = this.image.getBoundingClientRect();
+        // Update display coordinates based on current floor plan size
+        const rect = this.floorPlanElement.getBoundingClientRect();
         
         this.seats.forEach((seat) => {
             // Convert normalized coordinates (0-1) to overlay coordinates
             // IMPORTANT: The overlay uses the BASE displayed size (before CSS transform)
             // which may be smaller than natural size due to max-width/max-height constraints
-            const baseWidth = this.image.offsetWidth;
-            const baseHeight = this.image.offsetHeight;
+            const baseWidth = this.floorPlanElement.offsetWidth;
+            const baseHeight = this.floorPlanElement.offsetHeight;
             
             // Convert normalized to base displayed coordinates
-            // Since the overlay matches the image's base size, we multiply by base dimensions
+            // Since the overlay matches the floor plan's base size, we multiply by base dimensions
             const baseX = seat.normalizedX * baseWidth;
             const baseY = seat.normalizedY * baseHeight;
             
