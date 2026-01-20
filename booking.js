@@ -223,7 +223,7 @@ class SeatBooking {
     initializeMockAuth() {
         // Check if user already has a saved username
         const savedUsername = localStorage.getItem(this.USERNAME_STORAGE_KEY);
-        const allowChange = localStorage.getItem(this.USERNAME_STORAGE_KEY + '_allowChange');
+        const allowChange = 'false'; //localStorage.getItem(this.USERNAME_STORAGE_KEY + '_allowChange');
         
         if (savedUsername) {
             // User already logged in before
@@ -349,7 +349,7 @@ class SeatBooking {
         localStorage.setItem(this.USERNAME_STORAGE_KEY, username);
         
         // Save preference for showing name field
-        const allowChange = allowChangeCheckbox?.checked ?? true;
+        const allowChange = allowChangeCheckbox?.checked ?? false;
         localStorage.setItem(this.USERNAME_STORAGE_KEY + '_allowChange', allowChange.toString());
         
         // Store in memory for mock auth

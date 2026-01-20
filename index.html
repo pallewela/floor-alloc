@@ -3,17 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Work Area Booking - Floor Mapping</title>
+    <title>Seat Booking - Work Area Booking</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="booking.css">
     <!-- PDF.js library for rendering PDF files -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <!-- Microsoft Authentication Library (MSAL) for Entra ID -->
+    <script src="https://alcdn.msauth.net/browser/2.38.0/js/msal-browser.min.js"></script>
+    <!-- Authentication configuration and module -->
+    <script src="auth-config.js"></script>
+    <script src="auth.js"></script>
 </head>
-<body>
+<body class="booking-page">
     <div class="container">
-        <!-- <header>
-            <h1>Work Area Booking System</h1>
-            <p>Click on the floor plan to mark seat locations</p>
-        </header> -->
+        <header class="booking-header">
+            <div class="header-content">
+                <h1>🎫 Seat Booking</h1>
+                <a href="mapedit.html" class="back-link">← Back to Floor Mapping</a>
+            </div>
+        </header>
         
         <div class="main-content">
             <div class="image-container">
@@ -27,13 +35,9 @@
                         <span id="zoomLevel" class="zoom-level">100%</span>
                         <button id="zoomInBtn" class="zoom-btn" title="Zoom In">+</button>
                         <button id="resetZoomBtn" class="zoom-btn reset-btn" title="Reset Zoom">⛶</button>
-                        <button id="updateOverlayBtn" class="zoom-btn update-btn" title="Update Markers">⟳</button>
                     </div>
-                    <div class="grid-controls">
-                        <button id="gridToggleBtn" class="zoom-btn grid-btn" title="Toggle Snap Grid">⊞</button>
-                        <button id="gridDecreaseBtn" class="zoom-btn grid-size-btn" title="Decrease Grid Size">◂</button>
-                        <span id="gridSize" class="grid-size-display">5px</span>
-                        <button id="gridIncreaseBtn" class="zoom-btn grid-size-btn" title="Increase Grid Size">▸</button>
+                    <div class="selection-info" id="selectionInfo">
+                        <span class="selection-hint">🖱️ Click & drag to select multiple seats</span>
                     </div>
                 </div>
                 <div class="image-wrapper" id="imageWrapper">
@@ -42,45 +46,90 @@
                         <canvas id="pdfCanvas" style="display: none;"></canvas>
                         <!-- Image element for JPG/PNG (hidden when using PDF) -->
                         <img id="floorImage" src="" alt="Floor Plan" style="display: none;">
-                        <svg id="gridOverlay" class="grid-overlay"></svg>
                         <svg id="markerOverlay" class="marker-overlay"></svg>
+                        <!-- Selection rectangle overlay -->
+                        <div id="selectionRect" class="selection-rectangle"></div>
                     </div>
                 </div>
                 <div class="instructions">
-                    <p>Left-click to add a seat • Drag to move • Right-click to remove • Mouse wheel to zoom</p>
+                    <p>Click seat to book/cancel • Click & drag to select multiple seats</p>
                 </div>
             </div>
             
             <div class="sidebar">
-                <!-- Link to Booking Page -->
-                <div class="booking-link-panel">
-                    <a href="booking.html" class="booking-page-link">
-                        📅 Go to Seat Booking
-                        <span class="link-arrow">→</span>
-                    </a>
+                <!-- Booking Controls -->
+                <div class="booking-controls-panel">
+                    <!-- Authenticated User Display -->
+                    <div class="booking-control user-control" id="authUserControl">
+                        <label>Signed in as:</label>
+                        <div class="user-display" id="userDisplay">
+                            <span id="userName" class="user-name">Loading...</span>
+                            <button id="signOutBtn" class="sign-out-btn" title="Sign Out">↪</button>
+                        </div>
+                    </div>
+                    <!-- Manual Username Input (shown when auth not configured or fails) -->
+                    <div class="booking-control" id="manualUserControl" style="display: none;">
+                        <label for="usernameInput">Your Name:</label>
+                        <input type="text" id="usernameInput" class="booking-input" placeholder="Enter your name">
+                    </div>
+                    <div class="booking-control">
+                        <label for="bookingDate">Date:</label>
+                        <input type="date" id="bookingDate" class="booking-input">
+                    </div>
+                    <div class="booking-legend">
+                        <span class="legend-item"><span class="legend-dot available"></span> Available</span>
+                        <span class="legend-item"><span class="legend-dot booked"></span> Booked</span>
+                        <span class="legend-item"><span class="legend-dot my-booking"></span> Your Booking</span>
+                        <span class="legend-item"><span class="legend-dot selected"></span> Selected</span>
+                    </div>
                 </div>
                 
-                <!-- Mapping Panel -->
-                <div class="seat-list-panel" id="mappingPanel">
-                    <h2>Mapped Seats <span id="floorNameBadge" class="floor-badge"></span></h2>
-                    <div class="seat-list" id="seatList">
-                        <p class="empty-message">No seats mapped yet. Click on the floor plan to start.</p>
+                <!-- Selection Panel -->
+                <div class="selection-panel" id="selectionPanel">
+                    <h2>Selected Seats</h2>
+                    <div class="selected-seats-list" id="selectedSeatsList">
+                        <p class="empty-message">No seats selected. Click a seat or drag to select multiple.</p>
                     </div>
-                    <div class="export-buttons">
-                        <button id="exportBtn" class="export-btn" disabled>Export Current Floor</button>
-                        <button id="exportAllBtn" class="export-btn export-all-btn">Export All Floors</button>
-                        <div class="file-buttons">
-                            <button id="saveToFileBtn" class="export-btn file-btn">💾 Save to File</button>
-                            <button id="loadFromFileBtn" class="export-btn file-btn">📂 Load from File</button>
-                            <input type="file" id="fileInput" accept=".json" style="display: none;">
-                        </div>
-                        <button id="clearAllBtn" class="export-btn clear-all-btn">Clear All Data</button>
+                    <div class="selection-actions">
+                        <button id="bookSelectedBtn" class="action-btn book-btn" disabled>📅 Book Selected</button>
+                        <button id="clearSelectionBtn" class="action-btn clear-btn" disabled>✕ Clear Selection</button>
+                    </div>
+                </div>
+                
+                <!-- Booking Summary -->
+                <div class="booking-summary-panel">
+                    <h2>Your Bookings <span id="bookingFloorBadge" class="floor-badge"></span></h2>
+                    <div class="booking-list" id="bookingList">
+                        <p class="empty-message">No bookings for this date.</p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
     
-    <script src="app.js"></script>
+    <!-- Mock Login Modal (shown when Entra ID not configured) -->
+    <div class="login-modal-overlay" id="loginModalOverlay" style="display: none;">
+        <div class="login-modal">
+            <div class="login-modal-header">
+                <h2>👤 Sign In</h2>
+                <p>Enter your name to start booking seats</p>
+            </div>
+            <div class="login-modal-body">
+                <div class="login-field">
+                    <label for="loginUsername">Your Name:</label>
+                    <input type="text" id="loginUsername" class="login-input" placeholder="Enter your name" autofocus>
+                </div>
+                <!-- div class="login-checkbox">
+                    <input type="checkbox" id="allowNameChange" checked>
+                    <label for="allowNameChange">Allow changing name after sign-in</label>
+                </div -->
+            </div>
+            <div class="login-modal-footer">
+                <button id="loginSubmitBtn" class="login-submit-btn" disabled>Sign In</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="booking.js"></script>
 </body>
 </html>

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Work Area Booking - Floor Mapping</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- PDF.js library for rendering PDF files -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- <header>
+            <h1>Work Area Booking System</h1>
+            <p>Click on the floor plan to mark seat locations</p>
+        </header> -->
+        
+        <div class="main-content">
+            <div class="image-container">
+                <div class="controls-row">
+                    <div class="floor-selector">
+                        <label for="floorSelect">Floor:</label>
+                        <select id="floorSelect" class="floor-select"></select>
+                    </div>
+                    <div class="zoom-controls">
+                        <button id="zoomOutBtn" class="zoom-btn" title="Zoom Out">−</button>
+                        <span id="zoomLevel" class="zoom-level">100%</span>
+                        <button id="zoomInBtn" class="zoom-btn" title="Zoom In">+</button>
+                        <button id="resetZoomBtn" class="zoom-btn reset-btn" title="Reset Zoom">⛶</button>
+                        <button id="updateOverlayBtn" class="zoom-btn update-btn" title="Update Markers">⟳</button>
+                    </div>
+                    <div class="grid-controls">
+                        <button id="gridToggleBtn" class="zoom-btn grid-btn" title="Toggle Snap Grid">⊞</button>
+                        <button id="gridDecreaseBtn" class="zoom-btn grid-size-btn" title="Decrease Grid Size">◂</button>
+                        <span id="gridSize" class="grid-size-display">5px</span>
+                        <button id="gridIncreaseBtn" class="zoom-btn grid-size-btn" title="Increase Grid Size">▸</button>
+                    </div>
+                </div>
+                <div class="image-wrapper" id="imageWrapper">
+                    <div class="image-container-inner" id="imageContainerInner">
+                        <!-- Canvas for PDF rendering (hidden when using image) -->
+                        <canvas id="pdfCanvas" style="display: none;"></canvas>
+                        <!-- Image element for JPG/PNG (hidden when using PDF) -->
+                        <img id="floorImage" src="" alt="Floor Plan" style="display: none;">
+                        <svg id="gridOverlay" class="grid-overlay"></svg>
+                        <svg id="markerOverlay" class="marker-overlay"></svg>
+                    </div>
+                </div>
+                <div class="instructions">
+                    <p>Left-click to add a seat • Drag to move • Right-click to remove • Mouse wheel to zoom</p>
+                </div>
+            </div>
+            
+            <div class="sidebar">
+                <!-- Link to Booking Page -->
+                <div class="booking-link-panel">
+                    <a href="index.html" class="booking-page-link">
+                        📅 Go to Seat Booking
+                        <span class="link-arrow">→</span>
+                    </a>
+                </div>
+                
+                <!-- Mapping Panel -->
+                <div class="seat-list-panel" id="mappingPanel">
+                    <h2>Mapped Seats <span id="floorNameBadge" class="floor-badge"></span></h2>
+                    <div class="seat-list" id="seatList">
+                        <p class="empty-message">No seats mapped yet. Click on the floor plan to start.</p>
+                    </div>
+                    <div class="export-buttons">
+                        <button id="exportBtn" class="export-btn" disabled>Export Current Floor</button>
+                        <button id="exportAllBtn" class="export-btn export-all-btn">Export All Floors</button>
+                        <div class="file-buttons">
+                            <button id="saveToFileBtn" class="export-btn file-btn">💾 Save to File</button>
+                            <button id="loadFromFileBtn" class="export-btn file-btn">📂 Load from File</button>
+                            <input type="file" id="fileInput" accept=".json" style="display: none;">
+                        </div>
+                        <button id="clearAllBtn" class="export-btn clear-all-btn">Clear All Data</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="app.js"></script>
+</body>
+</html>
