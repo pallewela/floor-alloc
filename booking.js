@@ -49,7 +49,6 @@ class SeatBooking {
         this.zoomLevelDisplay = document.getElementById('zoomLevel');
         this.floorSelect = document.getElementById('floorSelect');
         
-        this.usernameInput = document.getElementById('usernameInput');
         this.bookingDate = document.getElementById('bookingDate');
         this.bookingList = document.getElementById('bookingList');
         this.bookingFloorBadge = document.getElementById('bookingFloorBadge');
@@ -133,23 +132,12 @@ class SeatBooking {
         }
     }
     
-    saveUsername() {
-        const username = this.usernameInput.value.trim();
-        if (username) {
-            localStorage.setItem(this.USERNAME_STORAGE_KEY, username);
-        }
-    }
-    
     getUsername() {
         // Try to get username from auth manager first (Entra ID)
         if (authManager && authManager.isAuthenticated()) {
             const authName = authManager.getUserDisplayName();
             if (authName) return authName;
         }
-        
-        // Try manual input field (if visible and has value)
-        const inputValue = this.usernameInput?.value?.trim();
-        if (inputValue) return inputValue;
         
         // Fallback to mock username
         if (this.mockUsername) return this.mockUsername;
@@ -223,23 +211,11 @@ class SeatBooking {
     initializeMockAuth() {
         // Check if user already has a saved username
         const savedUsername = localStorage.getItem(this.USERNAME_STORAGE_KEY);
-        const allowChange = 'false'; //localStorage.getItem(this.USERNAME_STORAGE_KEY + '_allowChange');
         
         if (savedUsername) {
-            // User already logged in before
+            // User already logged in before - show authenticated display
             this.mockUsername = savedUsername;
-            this.allowNameChange = allowChange === 'true';
-            
-            if (this.allowNameChange) {
-                // Show the name field so user can change it
-                this.showManualUsernameInput(true);
-                if (this.usernameInput) {
-                    this.usernameInput.value = savedUsername;
-                }
-            } else {
-                // Show authenticated-style display
-                this.showMockAuthenticatedUser(savedUsername);
-            }
+            this.showMockAuthenticatedUser(savedUsername);
         } else {
             // Show mock login modal
             this.showMockLoginModal();
@@ -267,80 +243,60 @@ class SeatBooking {
         }
     }
     
-    showManualUsernameInput(showNameField = true) {
-        const authUserControl = document.getElementById('authUserControl');
-        const manualUserControl = document.getElementById('manualUserControl');
-        
-        // Hide auth display
-        if (authUserControl) authUserControl.style.display = 'none';
-        
-        // Show or hide manual input based on preference
-        if (manualUserControl) {
-            manualUserControl.style.display = showNameField ? 'block' : 'none';
-        }
-        
-        // Load saved username from localStorage
-        const savedUsername = localStorage.getItem(this.USERNAME_STORAGE_KEY);
-        if (savedUsername && this.usernameInput) {
-            this.usernameInput.value = savedUsername;
-        }
-    }
     
     showMockLoginModal() {
         const modal = document.getElementById('loginModalOverlay');
         const loginInput = document.getElementById('loginUsername');
         const loginBtn = document.getElementById('loginSubmitBtn');
-        const allowChangeCheckbox = document.getElementById('allowNameChange');
         
         if (!modal) {
-            // Fallback if modal not in DOM
-            this.showManualUsernameInput(true);
+            console.error('[Booking] Login modal not found in DOM');
             return;
         }
         
         // Show modal
         modal.style.display = 'flex';
         
-        // Pre-fill with saved username if exists
+        // Pre-fill with saved username if exists, otherwise clear the input
         const savedUsername = localStorage.getItem(this.USERNAME_STORAGE_KEY);
-        if (savedUsername && loginInput) {
-            loginInput.value = savedUsername;
-            loginBtn.disabled = false;
-        }
-        
-        // Load saved preference for showing name field
-        const allowChange = localStorage.getItem(this.USERNAME_STORAGE_KEY + '_allowChange');
-        if (allowChangeCheckbox && allowChange !== null) {
-            allowChangeCheckbox.checked = allowChange === 'true';
-        }
-        
-        // Enable/disable submit button based on input
         if (loginInput) {
-            loginInput.addEventListener('input', () => {
-                loginBtn.disabled = !loginInput.value.trim();
-            });
-            
-            // Handle Enter key
-            loginInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter' && loginInput.value.trim()) {
-                    this.handleMockLogin();
-                }
-            });
-            
-            // Focus the input
-            setTimeout(() => loginInput.focus(), 100);
+            loginInput.value = savedUsername || '';
+            loginBtn.disabled = !savedUsername;
         }
         
-        // Handle submit button
-        if (loginBtn) {
-            loginBtn.addEventListener('click', () => this.handleMockLogin());
+        // Set up event listeners only once (check for flag)
+        if (!modal.hasAttribute('data-listeners-setup')) {
+            modal.setAttribute('data-listeners-setup', 'true');
+            
+            // Enable/disable submit button based on input
+            if (loginInput) {
+                loginInput.addEventListener('input', () => {
+                    loginBtn.disabled = !loginInput.value.trim();
+                });
+                
+                // Handle Enter key
+                loginInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter' && loginInput.value.trim()) {
+                        this.handleMockLogin();
+                    }
+                });
+            }
+            
+            // Handle submit button
+            if (loginBtn) {
+                loginBtn.addEventListener('click', () => this.handleMockLogin());
+            }
+        }
+        
+        // Focus the input
+        if (loginInput) {
+            setTimeout(() => loginInput.focus(), 100);
         }
     }
     
     handleMockLogin() {
         const modal = document.getElementById('loginModalOverlay');
         const loginInput = document.getElementById('loginUsername');
-        const allowChangeCheckbox = document.getElementById('allowNameChange');
         
         const username = loginInput?.value?.trim();
         if (!username) return;
@@ -348,29 +304,19 @@ class SeatBooking {
         // Save username
         localStorage.setItem(this.USERNAME_STORAGE_KEY, username);
         
-        // Save preference for showing name field
-        const allowChange = allowChangeCheckbox?.checked ?? false;
-        localStorage.setItem(this.USERNAME_STORAGE_KEY + '_allowChange', allowChange.toString());
-        
         // Store in memory for mock auth
         this.mockUsername = username;
-        this.allowNameChange = allowChange;
+        
+        // Clear any previous selections (in case of user switch)
+        this.selectedSeats.clear();
         
         // Hide modal
         if (modal) modal.style.display = 'none';
         
-        // Update UI - show mock authenticated state or manual input based on preference
-        if (allowChange) {
-            this.showManualUsernameInput(true);
-            // Set the username in the manual input
-            if (this.usernameInput) {
-                this.usernameInput.value = username;
-            }
-        } else {
-            this.showMockAuthenticatedUser(username);
-        }
+        // Show authenticated display
+        this.showMockAuthenticatedUser(username);
         
-        // Continue with app initialization
+        // Refresh UI with new user's data (markers, bookings, etc.)
         this.updateUI();
     }
     
@@ -399,6 +345,9 @@ class SeatBooking {
         localStorage.removeItem(this.USERNAME_STORAGE_KEY);
         localStorage.removeItem(this.USERNAME_STORAGE_KEY + '_allowChange');
         this.mockUsername = null;
+        
+        // Clear any selected seats from previous user
+        this.selectedSeats.clear();
         
         // Show login modal again
         this.showMockLoginModal();
@@ -444,12 +393,6 @@ class SeatBooking {
         // Set default date
         const today = new Date().toISOString().split('T')[0];
         this.bookingDate.value = today;
-        
-        // Load saved username
-        const savedUsername = localStorage.getItem(this.USERNAME_STORAGE_KEY);
-        if (savedUsername) {
-            this.usernameInput.value = savedUsername;
-        }
     }
     
     populateFloorSelector() {
@@ -565,9 +508,6 @@ class SeatBooking {
         
         // Booking date change
         this.bookingDate.addEventListener('change', () => this.updateUI());
-        
-        // Username change
-        this.usernameInput.addEventListener('change', () => this.saveUsername());
         
         // Book selected seats
         this.bookSelectedBtn.addEventListener('click', () => this.bookSelectedSeats());
@@ -746,8 +686,8 @@ class SeatBooking {
     bookSeat(seatNumber) {
         const username = this.getUsername();
         if (!username) {
-            alert('Please enter your name before booking a seat.');
-            this.usernameInput.focus();
+            alert('Please sign in before booking a seat.');
+            this.showMockLoginModal();
             return false;
         }
         
@@ -776,8 +716,8 @@ class SeatBooking {
     bookSelectedSeats() {
         const username = this.getUsername();
         if (!username) {
-            alert('Please enter your name before booking seats.');
-            this.usernameInput.focus();
+            alert('Please sign in before booking seats.');
+            this.showMockLoginModal();
             return;
         }
         

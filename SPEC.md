@@ -177,9 +177,7 @@ A web application for mapping and booking work areas (seats) in an office buildi
   - Sign-out button to clear session and log out
 - ✅ **Mock Login Mode**: When Entra ID is not configured, provides a simple login experience
   - Modal dialog prompts for username
-  - "Allow changing name after sign-in" checkbox option
-  - When checked: Name field remains visible in sidebar for easy changes
-  - When unchecked: Shows authenticated-style display with sign-out option
+  - Shows authenticated-style display with sign-out option
   - Username persisted in localStorage between sessions
 - ✅ **Graceful Fallback**: If authentication fails, falls back to mock login
 - ✅ **MSAL.js Integration**: Uses Microsoft Authentication Library (MSAL) for browser

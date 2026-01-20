@@ -46,7 +46,6 @@ A web application for mapping and booking work areas (seats) in an office buildi
 - **Dedicated Booking Page**: Separate page for booking operations
 - **Microsoft Entra ID Authentication**: Automatic user sign-in via Microsoft account (when configured)
 - **Mock Login Mode**: Simple username prompt when Entra ID is not configured
-  - Option to keep name field visible for easy changes
 - **Multi-Seat Selection**: Click and drag to select multiple seats at once with rectangular selection
 - **Date Selection**: Book seats for specific dates
 - **Visual Status**: Seats show as green (available), red (booked by others), blue (your booking), or yellow (selected)
@@ -72,8 +71,7 @@ A web application for mapping and booking work areas (seats) in an office buildi
 2. **Sign in**:
    - **With Entra ID configured**: Automatically redirects to Microsoft login
    - **Without Entra ID**: A login dialog prompts for your name
-     - Check "Allow changing name after sign-in" to keep the name field visible
-3. Your name appears in the sidebar (editable if checkbox was checked)
+3. Your name appears in the sidebar
 4. Select the date you want to book for
 5. **Single seat**: Click on a green (available) seat to select it
 6. **Multiple seats**: Click and drag to draw a rectangle and select all available seats within
@@ -110,7 +108,6 @@ The booking page supports two authentication modes:
 
 When Entra ID is not configured, the app uses a simple mock login:
 - A dialog prompts for your username when you first visit the booking page
-- Check **"Allow changing name after sign-in"** to keep the name field visible in the sidebar
 - Your name is saved in localStorage for future visits
 - Click the sign-out button to change users
 
