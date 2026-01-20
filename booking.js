@@ -299,17 +299,18 @@ class SeatBooking {
             this.loadCurrentFloor();
         });
         
-        // Zoom controls
-        this.zoomInBtn.addEventListener('click', () => this.setZoom(this.zoom + this.zoomStep));
-        this.zoomOutBtn.addEventListener('click', () => this.setZoom(this.zoom - this.zoomStep));
-        this.resetZoomBtn.addEventListener('click', () => this.setZoom(1.0));
+        // Zoom controls - disabled on booking page (kept for code compatibility)
+        // Zoom is fixed at 100% for consistent booking experience
+        // this.zoomInBtn.addEventListener('click', () => this.setZoom(this.zoom + this.zoomStep));
+        // this.zoomOutBtn.addEventListener('click', () => this.setZoom(this.zoom - this.zoomStep));
+        // this.resetZoomBtn.addEventListener('click', () => this.setZoom(1.0));
         
-        // Mouse wheel zoom
-        this.imageWrapper.addEventListener('wheel', (e) => {
-            e.preventDefault();
-            const delta = e.deltaY > 0 ? -this.zoomStep : this.zoomStep;
-            this.setZoom(this.zoom + delta);
-        }, { passive: false });
+        // Mouse wheel zoom - disabled on booking page
+        // this.imageWrapper.addEventListener('wheel', (e) => {
+        //     e.preventDefault();
+        //     const delta = e.deltaY > 0 ? -this.zoomStep : this.zoomStep;
+        //     this.setZoom(this.zoom + delta);
+        // }, { passive: false });
         
         // Window resize
         window.addEventListener('resize', () => {

@@ -43,33 +43,37 @@ A web application for mapping and booking work areas (seats) in an office buildi
 - **PDF**: PDF floor plans (requires HTTP server, not `file://` protocol)
 
 ### Seat Booking
-- **Two Modes**: Toggle between Mapping Mode (admin) and Booking Mode (user)
+- **Dedicated Booking Page**: Separate page for booking operations
+- **Multi-Seat Selection**: Click and drag to select multiple seats at once with rectangular selection
 - **Date Selection**: Book seats for specific dates
-- **Visual Status**: Seats show as green (available), red (booked by others), or blue (your booking)
-- **Easy Booking**: Click to book an available seat, click again to cancel your booking
+- **Visual Status**: Seats show as green (available), red (booked by others), blue (your booking), or yellow (selected)
+- **Batch Booking**: Select multiple seats and book them all with one click
 - **User Identity**: Enter your name to track your bookings
 - **Booking Summary**: View all your bookings for the selected date
 
 ## Usage
 
-### Mapping Mode (Admin)
+### Mapping Page (Admin)
 1. Open `index.html` in a web browser (use a local server for PDF support)
-2. Ensure "Mapping Mode" is selected
-3. Select a floor from the dropdown
-4. Click anywhere on the floor plan to add a seat marker
-5. Drag a marker to reposition it
-6. Right-click on or near a marker to remove it
-7. Use zoom controls or mouse wheel to zoom in/out
-8. Toggle snap grid for precise marker placement
-9. Use "Save to File" to download mappings as JSON for backup
+2. Select a floor from the dropdown
+3. Click anywhere on the floor plan to add a seat marker
+4. Drag a marker to reposition it
+5. Right-click on or near a marker to remove it
+6. Use zoom controls or mouse wheel to zoom in/out
+7. Toggle snap grid for precise marker placement
+8. Use "Save to File" to download mappings as JSON for backup
+9. Click "Go to Seat Booking" to navigate to the booking page
 
-### Booking Mode (User)
-1. Switch to "Booking Mode" using the mode toggle
+### Booking Page (User)
+1. Open `booking.html` or click the booking link from the mapping page
 2. Enter your name in the username field
 3. Select the date you want to book for
-4. Click on a green (available) seat to book it
-5. Click on a blue (your booking) seat to cancel it
-6. View your bookings in the summary panel
+4. **Single seat**: Click on a green (available) seat to select it
+5. **Multiple seats**: Click and drag to draw a rectangle and select all available seats within
+6. Selected seats appear yellow with chips in the sidebar
+7. Click "Book Selected" to book all selected seats at once
+8. Click on a blue (your booking) seat to cancel it
+9. View your bookings in the summary panel
 
 ## Configuration
 
@@ -102,9 +106,12 @@ You can create this file by:
 
 ## File Structure
 
-- `index.html` - Main HTML structure
-- `styles.css` - Styling and layout
-- `app.js` - Application logic
+- `index.html` - Seat mapping page (admin)
+- `booking.html` - Seat booking page (user)
+- `styles.css` - Shared styling and layout
+- `booking.css` - Booking page specific styles
+- `app.js` - Seat mapping application logic
+- `booking.js` - Seat booking application logic
 - `SPEC.md` - Detailed specification
 - `floor_plan_*.png/jpg/pdf` - Floor plan files
 - `seat-mappings.json` - (Optional) Default seat mappings, auto-loaded on startup

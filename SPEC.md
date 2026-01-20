@@ -132,9 +132,17 @@ A web application for mapping and booking work areas (seats) in an office buildi
 - ✅ **Zoom Compatible**: Drag works correctly at any zoom level
 
 #### 11. Seat Booking Functionality ✅
-- ✅ **Mode Toggle**: Switch between "Mapping Mode" and "Booking Mode"
-  - Mapping Mode: Add, remove, and reposition seat markers (admin function)
-  - Booking Mode: Book and cancel seat reservations (user function)
+- ✅ **Dedicated Booking Page**: Separate `booking.html` page for all booking operations
+  - Mapping page (`index.html`) focuses on admin seat mapping
+  - Booking page provides user-friendly interface for reservations
+  - Navigation link between pages
+- ✅ **Multi-Seat Selection**: Select multiple seats at once via rectangular area selection
+  - Click and drag to draw a selection rectangle
+  - All available seats within the rectangle are selected
+  - Visual preview of seats that will be selected while dragging
+  - Yellow highlight for selected seats
+  - Selection chips in sidebar showing selected seat numbers
+  - Book all selected seats with one click
 - ✅ **User Identity**: Simple username input for identifying bookings
   - Username persisted in localStorage
   - Required before booking
@@ -145,8 +153,11 @@ A web application for mapping and booking work areas (seats) in an office buildi
   - Available seats: Green markers
   - Booked by others: Red markers (shows booker name on hover)
   - Your bookings: Blue markers
+  - Selected seats: Yellow markers (pending booking)
 - ✅ **Booking Actions**:
-  - Click available seat to book it
+  - Click available seat to toggle selection
+  - Drag to select multiple seats at once
+  - Book all selected seats with "Book Selected" button
   - Click your booking to cancel it
   - Cannot modify others' bookings
 - ✅ **Booking Summary Panel**: Shows your bookings for selected date
@@ -192,10 +203,13 @@ A web application for mapping and booking work areas (seats) in an office buildi
 ### Implementation Details
 
 #### Files Structure
-- `index.html`: Main HTML structure with PDF.js library
-- `styles.css`: Complete styling with modern design
-- `app.js`: Full application logic (SeatMapper class)
-- Floor plan files (configurable in `app.js`):
+- `index.html`: Seat mapping page (admin) with PDF.js library
+- `booking.html`: Seat booking page (user) with multi-select support
+- `styles.css`: Complete styling with modern design (shared)
+- `booking.css`: Booking page specific styles (selection rectangle, chips, etc.)
+- `app.js`: Seat mapping application logic (SeatMapper class)
+- `booking.js`: Seat booking application logic (SeatBooking class)
+- Floor plan files (configurable in both `app.js` and `booking.js`):
   - Supports: `.jpg`, `.jpeg`, `.png`, `.gif`, `.webp`, `.pdf`
   - Examples: `floor_15.jpg`, `floor_plan_18th.png`, `floor_plan_18th.pdf`
 
