@@ -141,7 +141,20 @@ class SeatBooking {
     }
     
     getUsername() {
-        return this.usernameInput.value.trim();
+        // Try to get username from auth manager first (Entra ID)
+        if (authManager && authManager.isAuthenticated()) {
+            const authName = authManager.getUserDisplayName();
+            if (authName) return authName;
+        }
+        
+        // Try manual input field (if visible and has value)
+        const inputValue = this.usernameInput?.value?.trim();
+        if (inputValue) return inputValue;
+        
+        // Fallback to mock username
+        if (this.mockUsername) return this.mockUsername;
+        
+        return '';
     }
     
     getSelectedDate() {
@@ -149,6 +162,9 @@ class SeatBooking {
     }
     
     async init() {
+        // Initialize authentication first
+        await this.initializeAuth();
+        
         // Try loading from default file if no localStorage data
         if (this.seats.length === 0) {
             await this.loadFromDefaultFile();
@@ -165,6 +181,235 @@ class SeatBooking {
         
         // Set up event listeners
         this.setupEventListeners();
+    }
+    
+    async initializeAuth() {
+        try {
+            // Initialize the auth manager
+            await authManager.initialize();
+            
+            // Check if auth is configured
+            if (!authManager.isConfigured()) {
+                console.log('[Booking] Auth not configured, using mock login');
+                this.initializeMockAuth();
+                return;
+            }
+            
+            // Check if user is authenticated
+            if (!authManager.isAuthenticated()) {
+                // Redirect to sign in
+                console.log('[Booking] User not authenticated, redirecting to sign in');
+                await authManager.signIn();
+                // Note: This will redirect, so code below won't execute
+                return;
+            }
+            
+            // User is authenticated - update UI
+            this.updateAuthUserDisplay();
+            
+            // Set up sign out button
+            const signOutBtn = document.getElementById('signOutBtn');
+            if (signOutBtn) {
+                signOutBtn.addEventListener('click', () => this.handleSignOut());
+            }
+            
+        } catch (error) {
+            console.error('[Booking] Authentication failed:', error);
+            // Fallback to mock login
+            this.initializeMockAuth();
+        }
+    }
+    
+    initializeMockAuth() {
+        // Check if user already has a saved username
+        const savedUsername = localStorage.getItem(this.USERNAME_STORAGE_KEY);
+        const allowChange = localStorage.getItem(this.USERNAME_STORAGE_KEY + '_allowChange');
+        
+        if (savedUsername) {
+            // User already logged in before
+            this.mockUsername = savedUsername;
+            this.allowNameChange = allowChange === 'true';
+            
+            if (this.allowNameChange) {
+                // Show the name field so user can change it
+                this.showManualUsernameInput(true);
+                if (this.usernameInput) {
+                    this.usernameInput.value = savedUsername;
+                }
+            } else {
+                // Show authenticated-style display
+                this.showMockAuthenticatedUser(savedUsername);
+            }
+        } else {
+            // Show mock login modal
+            this.showMockLoginModal();
+        }
+    }
+    
+    updateAuthUserDisplay() {
+        const userName = authManager.getUserDisplayName();
+        const userEmail = authManager.getUserEmail();
+        
+        const authUserControl = document.getElementById('authUserControl');
+        const manualUserControl = document.getElementById('manualUserControl');
+        const userNameEl = document.getElementById('userName');
+        
+        if (userName) {
+            // Show authenticated user display
+            if (authUserControl) authUserControl.style.display = 'block';
+            if (manualUserControl) manualUserControl.style.display = 'none';
+            if (userNameEl) {
+                userNameEl.textContent = userName;
+                userNameEl.title = userEmail || userName;
+            }
+        } else {
+            this.showManualUsernameInput();
+        }
+    }
+    
+    showManualUsernameInput(showNameField = true) {
+        const authUserControl = document.getElementById('authUserControl');
+        const manualUserControl = document.getElementById('manualUserControl');
+        
+        // Hide auth display
+        if (authUserControl) authUserControl.style.display = 'none';
+        
+        // Show or hide manual input based on preference
+        if (manualUserControl) {
+            manualUserControl.style.display = showNameField ? 'block' : 'none';
+        }
+        
+        // Load saved username from localStorage
+        const savedUsername = localStorage.getItem(this.USERNAME_STORAGE_KEY);
+        if (savedUsername && this.usernameInput) {
+            this.usernameInput.value = savedUsername;
+        }
+    }
+    
+    showMockLoginModal() {
+        const modal = document.getElementById('loginModalOverlay');
+        const loginInput = document.getElementById('loginUsername');
+        const loginBtn = document.getElementById('loginSubmitBtn');
+        const allowChangeCheckbox = document.getElementById('allowNameChange');
+        
+        if (!modal) {
+            // Fallback if modal not in DOM
+            this.showManualUsernameInput(true);
+            return;
+        }
+        
+        // Show modal
+        modal.style.display = 'flex';
+        
+        // Pre-fill with saved username if exists
+        const savedUsername = localStorage.getItem(this.USERNAME_STORAGE_KEY);
+        if (savedUsername && loginInput) {
+            loginInput.value = savedUsername;
+            loginBtn.disabled = false;
+        }
+        
+        // Load saved preference for showing name field
+        const allowChange = localStorage.getItem(this.USERNAME_STORAGE_KEY + '_allowChange');
+        if (allowChangeCheckbox && allowChange !== null) {
+            allowChangeCheckbox.checked = allowChange === 'true';
+        }
+        
+        // Enable/disable submit button based on input
+        if (loginInput) {
+            loginInput.addEventListener('input', () => {
+                loginBtn.disabled = !loginInput.value.trim();
+            });
+            
+            // Handle Enter key
+            loginInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && loginInput.value.trim()) {
+                    this.handleMockLogin();
+                }
+            });
+            
+            // Focus the input
+            setTimeout(() => loginInput.focus(), 100);
+        }
+        
+        // Handle submit button
+        if (loginBtn) {
+            loginBtn.addEventListener('click', () => this.handleMockLogin());
+        }
+    }
+    
+    handleMockLogin() {
+        const modal = document.getElementById('loginModalOverlay');
+        const loginInput = document.getElementById('loginUsername');
+        const allowChangeCheckbox = document.getElementById('allowNameChange');
+        
+        const username = loginInput?.value?.trim();
+        if (!username) return;
+        
+        // Save username
+        localStorage.setItem(this.USERNAME_STORAGE_KEY, username);
+        
+        // Save preference for showing name field
+        const allowChange = allowChangeCheckbox?.checked ?? true;
+        localStorage.setItem(this.USERNAME_STORAGE_KEY + '_allowChange', allowChange.toString());
+        
+        // Store in memory for mock auth
+        this.mockUsername = username;
+        this.allowNameChange = allowChange;
+        
+        // Hide modal
+        if (modal) modal.style.display = 'none';
+        
+        // Update UI - show mock authenticated state or manual input based on preference
+        if (allowChange) {
+            this.showManualUsernameInput(true);
+            // Set the username in the manual input
+            if (this.usernameInput) {
+                this.usernameInput.value = username;
+            }
+        } else {
+            this.showMockAuthenticatedUser(username);
+        }
+        
+        // Continue with app initialization
+        this.updateUI();
+    }
+    
+    showMockAuthenticatedUser(username) {
+        const authUserControl = document.getElementById('authUserControl');
+        const manualUserControl = document.getElementById('manualUserControl');
+        const userNameEl = document.getElementById('userName');
+        const signOutBtn = document.getElementById('signOutBtn');
+        
+        // Show auth-style display with mock user
+        if (authUserControl) authUserControl.style.display = 'block';
+        if (manualUserControl) manualUserControl.style.display = 'none';
+        if (userNameEl) {
+            userNameEl.textContent = username;
+            userNameEl.title = 'Signed in as ' + username;
+        }
+        
+        // Update sign out to show mock login again
+        if (signOutBtn) {
+            signOutBtn.onclick = () => this.handleMockSignOut();
+        }
+    }
+    
+    handleMockSignOut() {
+        // Clear stored data
+        localStorage.removeItem(this.USERNAME_STORAGE_KEY);
+        localStorage.removeItem(this.USERNAME_STORAGE_KEY + '_allowChange');
+        this.mockUsername = null;
+        
+        // Show login modal again
+        this.showMockLoginModal();
+    }
+    
+    async handleSignOut() {
+        try {
+            await authManager.signOut();
+        } catch (error) {
+            console.error('[Booking] Sign out failed:', error);
+        }
     }
     
     async loadFromDefaultFile() {

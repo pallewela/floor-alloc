@@ -164,6 +164,32 @@ A web application for mapping and booking work areas (seats) in an office buildi
 - ✅ **Booking Persistence**: All bookings saved to localStorage
 - ✅ **Multi-floor Support**: Bookings tracked per floor
 
+#### 12. Microsoft Entra ID Authentication ✅
+- ✅ **Automatic Sign-In**: Users are automatically authenticated via Microsoft Entra ID
+  - Redirects to Microsoft login if not authenticated
+  - Seamless single sign-on for users already logged into Microsoft services
+- ✅ **User Identity from Token**: Username automatically populated from Entra ID
+  - No manual username entry required
+  - Uses user's display name from Microsoft account
+  - Email available as fallback identifier
+- ✅ **Session Management**: 
+  - Authentication state cached in sessionStorage
+  - Sign-out button to clear session and log out
+- ✅ **Mock Login Mode**: When Entra ID is not configured, provides a simple login experience
+  - Modal dialog prompts for username
+  - "Allow changing name after sign-in" checkbox option
+  - When checked: Name field remains visible in sidebar for easy changes
+  - When unchecked: Shows authenticated-style display with sign-out option
+  - Username persisted in localStorage between sessions
+- ✅ **Graceful Fallback**: If authentication fails, falls back to mock login
+- ✅ **MSAL.js Integration**: Uses Microsoft Authentication Library (MSAL) for browser
+  - Handles redirect-based authentication flow
+  - Automatic token management and refresh
+- ✅ **Configuration**: Easy setup via `auth-config.js`
+  - Client ID and Tenant ID configurable
+  - Redirect URI auto-detected from current location
+  - Works without configuration (uses mock login mode)
+
 ### Technical Implementation
 
 #### Coordinate System ✅
@@ -204,11 +230,13 @@ A web application for mapping and booking work areas (seats) in an office buildi
 
 #### Files Structure
 - `index.html`: Seat mapping page (admin) with PDF.js library
-- `booking.html`: Seat booking page (user) with multi-select support
+- `booking.html`: Seat booking page (user) with multi-select support and Entra ID auth
 - `styles.css`: Complete styling with modern design (shared)
-- `booking.css`: Booking page specific styles (selection rectangle, chips, etc.)
+- `booking.css`: Booking page specific styles (selection rectangle, chips, auth UI, etc.)
 - `app.js`: Seat mapping application logic (SeatMapper class)
 - `booking.js`: Seat booking application logic (SeatBooking class)
+- `auth.js`: Microsoft Entra ID authentication module (AuthManager class)
+- `auth-config.js`: Authentication configuration (client ID, tenant ID)
 - Floor plan files (configurable in both `app.js` and `booking.js`):
   - Supports: `.jpg`, `.jpeg`, `.png`, `.gif`, `.webp`, `.pdf`
   - Examples: `floor_15.jpg`, `floor_plan_18th.png`, `floor_plan_18th.pdf`
@@ -227,8 +255,11 @@ A web application for mapping and booking work areas (seats) in an office buildi
 ### Browser Compatibility
 - ✅ Works in all modern browsers (Chrome, Firefox, Safari, Edge)
 - ✅ External dependency: PDF.js (loaded from CDN for PDF support)
+- ✅ External dependency: MSAL.js (loaded from CDN for Entra ID authentication)
 - ⚠️ **Note**: PDF files require serving via HTTP server (not `file://` protocol) due to CORS restrictions
+- ⚠️ **Note**: Entra ID authentication requires HTTPS in production (localhost allowed for development)
 
 ### Future Enhancements (Not Yet Implemented)
 - ⏳ Seat name/description editing
 - ⏳ Undo/redo functionality
+- ⏳ Backend API integration for centralized data storage

@@ -279,6 +279,206 @@ body.booking-page {
     display: none;
 }
 
+/* ==================== Mock Login Modal ==================== */
+
+.login-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+}
+
+.login-modal {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    width: 100%;
+    max-width: 400px;
+    margin: 20px;
+    overflow: hidden;
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.login-modal-header {
+    background: linear-gradient(135deg, #086972 0%, #01a9b4 100%);
+    color: white;
+    padding: 24px;
+    text-align: center;
+}
+
+.login-modal-header h2 {
+    margin: 0 0 8px 0;
+    font-size: 1.5em;
+}
+
+.login-modal-header p {
+    margin: 0;
+    opacity: 0.9;
+    font-size: 14px;
+}
+
+.login-modal-body {
+    padding: 24px;
+}
+
+.login-field {
+    margin-bottom: 16px;
+}
+
+.login-field label {
+    display: block;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.login-input {
+    width: 100%;
+    padding: 12px 14px;
+    border: 2px solid #d0e3f7;
+    border-radius: 8px;
+    font-size: 16px;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.login-input:focus {
+    outline: none;
+    border-color: #086972;
+    box-shadow: 0 0 0 3px rgba(8, 105, 114, 0.15);
+}
+
+.login-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    margin-top: 8px;
+}
+
+.login-checkbox input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: #086972;
+}
+
+.login-checkbox label {
+    font-size: 13px;
+    color: #555;
+    cursor: pointer;
+    user-select: none;
+}
+
+.login-modal-footer {
+    padding: 16px 24px 24px;
+}
+
+.login-submit-btn {
+    width: 100%;
+    padding: 14px 24px;
+    background: linear-gradient(135deg, #086972 0%, #01a9b4 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.login-submit-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(8, 105, 114, 0.4);
+}
+
+.login-submit-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* ==================== Authentication Styles ==================== */
+
+/* User control section */
+.user-control {
+    margin-bottom: 12px;
+}
+
+.user-control label {
+    display: block;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 6px;
+    font-size: 13px;
+}
+
+/* Authenticated user display */
+.user-display {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(135deg, #e8f4f8 0%, #d0e8f0 100%);
+    padding: 10px 14px;
+    border-radius: 6px;
+    border: 2px solid #086972;
+}
+
+.user-name {
+    font-weight: 600;
+    color: #086972;
+    font-size: 14px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: calc(100% - 40px);
+}
+
+.sign-out-btn {
+    background: transparent;
+    border: 1px solid #086972;
+    color: #086972;
+    padding: 4px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.sign-out-btn:hover {
+    background: #086972;
+    color: white;
+}
+
+/* Loading state for user name */
+.user-name.loading {
+    color: #999;
+    font-style: italic;
+}
+
 /* Responsive adjustments */
 @media (max-width: 900px) {
     .header-content {
@@ -289,5 +489,13 @@ body.booking-page {
     
     .selection-info {
         display: none;
+    }
+    
+    .user-display {
+        padding: 8px 10px;
+    }
+    
+    .user-name {
+        font-size: 13px;
     }
 }

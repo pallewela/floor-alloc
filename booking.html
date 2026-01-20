@@ -8,6 +8,11 @@
     <link rel="stylesheet" href="booking.css">
     <!-- PDF.js library for rendering PDF files -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <!-- Microsoft Authentication Library (MSAL) for Entra ID -->
+    <script src="https://alcdn.msauth.net/browser/2.38.0/js/msal-browser.min.js"></script>
+    <!-- Authentication configuration and module -->
+    <script src="auth-config.js"></script>
+    <script src="auth.js"></script>
 </head>
 <body class="booking-page">
     <div class="container">
@@ -54,7 +59,16 @@
             <div class="sidebar">
                 <!-- Booking Controls -->
                 <div class="booking-controls-panel">
-                    <div class="booking-control">
+                    <!-- Authenticated User Display -->
+                    <div class="booking-control user-control" id="authUserControl">
+                        <label>Signed in as:</label>
+                        <div class="user-display" id="userDisplay">
+                            <span id="userName" class="user-name">Loading...</span>
+                            <button id="signOutBtn" class="sign-out-btn" title="Sign Out">↪</button>
+                        </div>
+                    </div>
+                    <!-- Manual Username Input (shown when auth not configured or fails) -->
+                    <div class="booking-control" id="manualUserControl" style="display: none;">
                         <label for="usernameInput">Your Name:</label>
                         <input type="text" id="usernameInput" class="booking-input" placeholder="Enter your name">
                     </div>
@@ -89,6 +103,29 @@
                         <p class="empty-message">No bookings for this date.</p>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Mock Login Modal (shown when Entra ID not configured) -->
+    <div class="login-modal-overlay" id="loginModalOverlay" style="display: none;">
+        <div class="login-modal">
+            <div class="login-modal-header">
+                <h2>👤 Sign In</h2>
+                <p>Enter your name to start booking seats</p>
+            </div>
+            <div class="login-modal-body">
+                <div class="login-field">
+                    <label for="loginUsername">Your Name:</label>
+                    <input type="text" id="loginUsername" class="login-input" placeholder="Enter your name" autofocus>
+                </div>
+                <div class="login-checkbox">
+                    <input type="checkbox" id="allowNameChange" checked>
+                    <label for="allowNameChange">Allow changing name after sign-in</label>
+                </div>
+            </div>
+            <div class="login-modal-footer">
+                <button id="loginSubmitBtn" class="login-submit-btn" disabled>Sign In</button>
             </div>
         </div>
     </div>
