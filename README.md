@@ -27,7 +27,9 @@ A web application for mapping and booking work areas (seats) in an office buildi
 - **Precision Placement**: Markers snap to grid intersections when enabled
 
 ### Data Persistence
-- **Auto-Save**: Seat mappings automatically saved to localStorage
+- **localStorage (Default)**: Seat mappings and bookings saved locally per device
+- **Firebase Cloud Storage (Optional)**: Store data in Firebase Realtime Database for sharing across users/devices
+- **Auto-Save**: Data automatically saved when changes occur
 - **Auto-Load**: Mappings restored when you return to the page
 - **Default Mappings**: Automatically loads from `seat-mappings.json` if present (when no localStorage data exists)
 - **Clear All Data**: Option to reset all mappings across all floors
@@ -142,6 +144,102 @@ const authConfig = {
    - HTTPS is required (localhost is exempt for development)
    - Add your production URL to the app registration redirect URIs
 
+### Firebase Cloud Storage (Optional)
+
+To enable Firebase for shared data storage across users and devices:
+
+#### Step 1: Create a Firebase Project
+
+1. Go to [Firebase Console](https://console.firebase.google.com/)
+2. Click **"Create a project"** (or select an existing project)
+3. Enter a project name (e.g., "workarea-booking")
+4. Disable Google Analytics (optional, not required for this app)
+5. Click **"Create project"**
+
+#### Step 2: Set Up Realtime Database
+
+1. In your Firebase project, go to **Build → Realtime Database**
+2. Click **"Create Database"**
+3. Choose a database location (select one close to your users)
+4. Start in **Test mode** for development (allows read/write without authentication)
+   - ⚠️ **Warning**: Test mode allows anyone to read/write data. For production, configure proper security rules
+5. Click **"Enable"**
+
+#### Step 3: Get Your Configuration
+
+1. In Firebase Console, click the **gear icon** → **Project settings**
+2. Scroll down to **"Your apps"** section
+3. Click **"Add app"** → Select **Web** (</> icon)
+4. Register your app with a nickname (e.g., "workarea-booking-web")
+5. Copy the Firebase configuration object
+
+#### Step 4: Configure the Application
+
+Edit `firebase-config.js` and replace the placeholder values:
+
+```javascript
+const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "your-project.firebaseapp.com",
+    databaseURL: "https://your-project-default-rtdb.firebaseio.com",
+    projectId: "your-project-id",
+    storageBucket: "your-project.appspot.com",
+    messagingSenderId: "123456789",
+    appId: "your-app-id"
+};
+
+// Enable Firebase storage (set to false to use localStorage only)
+const useFirebaseStorage = true;
+```
+
+#### Step 5: Set Database Rules (Production)
+
+For production, update your Realtime Database rules:
+
+1. Go to **Realtime Database → Rules**
+2. Replace with appropriate rules:
+
+```json
+{
+  "rules": {
+    "seatMappings": {
+      ".read": true,
+      ".write": true
+    },
+    "bookings": {
+      ".read": true,
+      ".write": true
+    }
+  }
+}
+```
+
+⚠️ **Security Note**: The above rules allow public read/write access. For a secure production deployment, consider implementing Firebase Authentication and user-based rules.
+
+#### Step 6: Deploy (Optional)
+
+To host the app on Firebase Hosting:
+
+```bash
+# Install Firebase CLI
+npm install -g firebase-tools
+
+# Login to Firebase
+firebase login
+
+# Initialize Firebase in your project directory
+firebase init
+
+# Select "Hosting" and your Firebase project
+# Set public directory to "." (current directory)
+# Configure as single-page app: No
+
+# Deploy
+firebase deploy
+```
+
+Your app will be available at `https://your-project.web.app`
+
 ### Default Seat Mappings
 
 To provide default seat mappings, create a `seat-mappings.json` file in the application root. This file will be automatically loaded on startup if no localStorage data exists.
@@ -162,6 +260,8 @@ You can create this file by:
 - `booking.js` - Seat booking application logic
 - `auth.js` - Microsoft Entra ID authentication module
 - `auth-config.js` - Authentication configuration (client ID, tenant ID)
+- `firebase-config.js` - Firebase project configuration
+- `firebase-storage.js` - Firebase storage module for cloud persistence
 - `SPEC.md` - Detailed specification
 - `floor_plan_*.png/jpg/pdf` - Floor plan files
 - `seat-mappings.json` - (Optional) Default seat mappings, auto-loaded on startup
@@ -171,9 +271,11 @@ You can create this file by:
 - **Normalized Coordinates**: Uses 0-1 range for consistency across screen sizes and zoom levels
 - **SVG Overlay**: Markers rendered in SVG for quality at any zoom level
 - **CSS Transform Zoom**: Smooth zooming with proper coordinate handling
-- **LocalStorage**: Persistent data storage across browser sessions
+- **LocalStorage**: Default persistent data storage across browser sessions
+- **Firebase Realtime Database**: Optional cloud storage for shared data
 - **PDF.js**: External library (CDN) for PDF rendering
 - **MSAL.js**: Microsoft Authentication Library for Entra ID integration
+- **Firebase SDK**: Google Firebase SDK for cloud database access
 
 ## Browser Compatibility
 
@@ -182,6 +284,7 @@ Works in all modern browsers (Chrome, Firefox, Safari, Edge).
 **Notes**:
 - PDF files require serving via HTTP server (not `file://` protocol) due to CORS restrictions
 - Entra ID authentication requires HTTPS in production (localhost is allowed for development)
+- Firebase features require internet connection
 
 Use a local development server like:
 

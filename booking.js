@@ -94,6 +94,7 @@ class SeatBooking {
     }
     
     loadFromStorage() {
+        // Synchronous fallback - used during constructor
         try {
             const savedData = localStorage.getItem(this.STORAGE_KEY);
             if (savedData) {
@@ -112,7 +113,41 @@ class SeatBooking {
         }
     }
     
+    async loadFromStorageAsync() {
+        // Load seat mappings from Firebase or localStorage
+        try {
+            if (typeof firebaseStorage !== 'undefined' && firebaseStorage.isActive()) {
+                const allMappings = await firebaseStorage.loadAllSeatMappings();
+                for (const floorId in allMappings) {
+                    if (this.floorData[floorId]) {
+                        const data = allMappings[floorId];
+                        if (Array.isArray(data)) {
+                            // Direct array format
+                            this.floorData[floorId] = {
+                                seats: data,
+                                nextSeatNumber: data.length > 0 ? Math.max(...data.map(s => s.number)) + 1 : 1
+                            };
+                        } else if (data.seats) {
+                            // Object with seats property
+                            this.floorData[floorId] = {
+                                seats: data.seats || [],
+                                nextSeatNumber: data.nextSeatNumber || 1
+                            };
+                        }
+                    }
+                }
+                console.log('[Booking] Loaded seat mappings from Firebase');
+            } else {
+                // Use localStorage (already loaded in constructor)
+                console.log('[Booking] Using seat mappings from localStorage');
+            }
+        } catch (error) {
+            console.warn('Failed to load seat mappings from Firebase:', error);
+        }
+    }
+    
     loadBookings() {
+        // Synchronous fallback - used during constructor
         try {
             const savedBookings = localStorage.getItem(this.BOOKINGS_STORAGE_KEY);
             if (savedBookings) {
@@ -124,11 +159,76 @@ class SeatBooking {
         }
     }
     
+    async loadBookingsAsync() {
+        // Load bookings from Firebase or localStorage
+        try {
+            if (typeof firebaseStorage !== 'undefined' && firebaseStorage.isActive()) {
+                console.log('[Booking] Firebase active - loading bookings from Firebase');
+                // Load bookings for current date and floor from Firebase
+                await this.loadBookingsFromFirebase();
+            } else {
+                // Use localStorage (already loaded in constructor)
+                console.log('[Booking] Using bookings from localStorage');
+            }
+        } catch (error) {
+            console.warn('Failed to load bookings from Firebase:', error);
+        }
+    }
+    
+    async loadBookingsFromFirebase() {
+        if (typeof firebaseStorage === 'undefined' || !firebaseStorage.isActive()) {
+            return;
+        }
+        
+        const date = this.getSelectedDate();
+        const floorId = this.currentFloorId;
+        
+        try {
+            // Load bookings for current date and floor
+            const floorBookings = await firebaseStorage.loadBookings(date, floorId);
+            
+            // Initialize bookings structure if needed
+            if (!this.bookings[date]) {
+                this.bookings[date] = {};
+            }
+            
+            // Store the loaded bookings
+            this.bookings[date][floorId] = {};
+            
+            // Convert Firebase data to expected format
+            for (const [seatNumber, booking] of Object.entries(floorBookings)) {
+                if (booking) {
+                    this.bookings[date][floorId][seatNumber] = {
+                        user: booking.username || booking.user,
+                        timestamp: booking.timestamp
+                    };
+                }
+            }
+            
+            console.log(`[Booking] Loaded ${Object.keys(floorBookings).length} bookings from Firebase for ${date}/${floorId}`);
+        } catch (error) {
+            console.warn('Failed to load bookings from Firebase:', error);
+        }
+    }
+    
     saveBookings() {
+        // Save to localStorage (fallback)
         try {
             localStorage.setItem(this.BOOKINGS_STORAGE_KEY, JSON.stringify(this.bookings));
         } catch (error) {
             console.warn('Failed to save bookings:', error);
+        }
+    }
+    
+    async saveBookingToFirebase(date, floorId, seatNumber, booking) {
+        if (typeof firebaseStorage !== 'undefined' && firebaseStorage.isActive()) {
+            await firebaseStorage.saveBooking(date, floorId, seatNumber, booking);
+        }
+    }
+    
+    async removeBookingFromFirebase(date, floorId, seatNumber) {
+        if (typeof firebaseStorage !== 'undefined' && firebaseStorage.isActive()) {
+            await firebaseStorage.removeBooking(date, floorId, seatNumber);
         }
     }
     
@@ -150,25 +250,49 @@ class SeatBooking {
     }
     
     async init() {
-        // Initialize authentication first
-        await this.initializeAuth();
+        // Initialize Firebase storage first
+        await this.initializeFirebaseStorage();
         
-        // Try loading from default file if no localStorage data
-        if (this.seats.length === 0) {
-            await this.loadFromDefaultFile();
-        }
+        // Initialize authentication
+        await this.initializeAuth();
         
         // Populate floor selector
         this.populateFloorSelector();
         
-        // Initialize booking controls
+        // Initialize booking controls (sets the date picker) - MUST be before loading bookings
         this.initializeBookingControls();
+        
+        // Load data from storage (Firebase or localStorage)
+        await this.loadFromStorageAsync();
+        await this.loadBookingsAsync();
+        
+        // Try loading from default file if no data
+        if (this.seats.length === 0) {
+            await this.loadFromDefaultFile();
+        }
         
         // Load current floor
         this.loadCurrentFloor();
         
         // Set up event listeners
         this.setupEventListeners();
+    }
+    
+    async initializeFirebaseStorage() {
+        try {
+            if (typeof firebaseStorage !== 'undefined') {
+                await firebaseStorage.initialize();
+                if (firebaseStorage.isActive()) {
+                    console.log('[Booking] Using Firebase storage');
+                } else {
+                    console.log('[Booking] Firebase not configured, using localStorage');
+                }
+            } else {
+                console.log('[Booking] Firebase storage module not loaded, using localStorage');
+            }
+        } catch (error) {
+            console.warn('[Booking] Failed to initialize Firebase storage:', error);
+        }
     }
     
     async initializeAuth() {
@@ -482,8 +606,10 @@ class SeatBooking {
     
     setupEventListeners() {
         // Floor selector
-        this.floorSelect.addEventListener('change', (e) => {
+        this.floorSelect.addEventListener('change', async (e) => {
             this.currentFloorId = e.target.value;
+            // Load bookings from Firebase for new floor
+            await this.loadBookingsFromFirebase();
             this.loadCurrentFloor();
         });
         
@@ -507,7 +633,11 @@ class SeatBooking {
         });
         
         // Booking date change
-        this.bookingDate.addEventListener('change', () => this.updateUI());
+        this.bookingDate.addEventListener('change', async () => {
+            // Load bookings from Firebase for new date
+            await this.loadBookingsFromFirebase();
+            this.updateUI();
+        });
         
         // Book selected seats
         this.bookSelectedBtn.addEventListener('click', () => this.bookSelectedSeats());
@@ -683,7 +813,7 @@ class SeatBooking {
         return this.bookings[date][floorId][seatNumber] || null;
     }
     
-    bookSeat(seatNumber) {
+    async bookSeat(seatNumber) {
         const username = this.getUsername();
         if (!username) {
             alert('Please sign in before booking a seat.');
@@ -705,15 +835,20 @@ class SeatBooking {
             return false; // Already booked
         }
         
-        this.bookings[date][floorId][seatNumber] = {
+        const booking = {
             user: username,
             timestamp: new Date().toISOString()
         };
         
+        this.bookings[date][floorId][seatNumber] = booking;
+        
+        // Save to Firebase if active
+        await this.saveBookingToFirebase(date, floorId, seatNumber, booking);
+        
         return true;
     }
     
-    bookSelectedSeats() {
+    async bookSelectedSeats() {
         const username = this.getUsername();
         if (!username) {
             alert('Please sign in before booking seats.');
@@ -727,11 +862,13 @@ class SeatBooking {
         }
         
         let bookedCount = 0;
-        this.selectedSeats.forEach(seatNumber => {
-            if (this.bookSeat(seatNumber)) {
+        const seatsToBook = Array.from(this.selectedSeats);
+        
+        for (const seatNumber of seatsToBook) {
+            if (await this.bookSeat(seatNumber)) {
                 bookedCount++;
             }
-        });
+        }
         
         if (bookedCount > 0) {
             this.saveBookings();
@@ -741,7 +878,7 @@ class SeatBooking {
         this.clearSelection();
     }
     
-    cancelBooking(seatNumber, floorId = null) {
+    async cancelBooking(seatNumber, floorId = null) {
         const date = this.getSelectedDate();
         floorId = floorId || this.currentFloorId;
         
@@ -766,6 +903,9 @@ class SeatBooking {
         if (Object.keys(this.bookings[date]).length === 0) {
             delete this.bookings[date];
         }
+        
+        // Remove from Firebase if active
+        await this.removeBookingFromFirebase(date, floorId, seatNumber);
         
         this.saveBookings();
         this.updateUI();

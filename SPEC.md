@@ -188,6 +188,25 @@ A web application for mapping and booking work areas (seats) in an office buildi
   - Redirect URI auto-detected from current location
   - Works without configuration (uses mock login mode)
 
+#### 13. Firebase Cloud Storage ✅
+- ✅ **Cloud Persistence**: Store seat mappings and bookings in Firebase Realtime Database
+  - Enables data sharing across multiple devices and users
+  - Real-time synchronization of booking data
+  - Survives browser data clears and device changes
+- ✅ **Dual Storage Mode**: Supports both localStorage and Firebase
+  - localStorage: Default, works offline, per-device storage
+  - Firebase: Optional, cloud-based, shared across all users
+  - Configurable via `firebase-config.js`
+- ✅ **Data Structure**:
+  - `/seatMappings/{floorId}`: Seat positions for each floor
+  - `/bookings/{date}/{floorId}/{seatNumber}`: Booking records
+- ✅ **Graceful Fallback**: If Firebase is not configured or unavailable, falls back to localStorage
+- ✅ **No Authentication Required**: Current implementation uses public Firebase rules (future enhancement: Firebase Auth)
+- ✅ **Configuration**: Easy setup via `firebase-config.js`
+  - Firebase project credentials
+  - Database URL
+  - Enable/disable Firebase storage
+
 ### Technical Implementation
 
 #### Coordinate System ✅
@@ -211,9 +230,11 @@ A web application for mapping and booking work areas (seats) in an office buildi
 - ✅ **Interactive Markers**: Markers are clickable for removal via right-click
 - ✅ **Real-time Updates**: Markers update immediately when seats are added/removed
 
-#### Data Persistence
-- ✅ **Current**: Store in memory only (lost on page refresh)
-- ⏳ **Future**: Save to localStorage or backend
+#### Data Persistence ✅
+- ✅ **localStorage**: Default storage for seat mappings and bookings (per-device)
+- ✅ **Firebase Realtime Database**: Optional cloud storage for shared data across users/devices
+- ✅ **Automatic Sync**: Data automatically saved when changes occur
+- ✅ **Configurable**: Switch between localStorage and Firebase via configuration
 
 #### UI Layout ✅
 - ✅ **Layout**: Left/Right split layout
@@ -235,6 +256,8 @@ A web application for mapping and booking work areas (seats) in an office buildi
 - `booking.js`: Seat booking application logic (SeatBooking class)
 - `auth.js`: Microsoft Entra ID authentication module (AuthManager class)
 - `auth-config.js`: Authentication configuration (client ID, tenant ID)
+- `firebase-config.js`: Firebase project configuration (API key, database URL)
+- `firebase-storage.js`: Firebase storage module (FirebaseStorage class)
 - Floor plan files (configurable in both `app.js` and `booking.js`):
   - Supports: `.jpg`, `.jpeg`, `.png`, `.gif`, `.webp`, `.pdf`
   - Examples: `floor_15.jpg`, `floor_plan_18th.png`, `floor_plan_18th.pdf`
@@ -254,10 +277,12 @@ A web application for mapping and booking work areas (seats) in an office buildi
 - ✅ Works in all modern browsers (Chrome, Firefox, Safari, Edge)
 - ✅ External dependency: PDF.js (loaded from CDN for PDF support)
 - ✅ External dependency: MSAL.js (loaded from CDN for Entra ID authentication)
+- ✅ External dependency: Firebase SDK (loaded from CDN for cloud storage)
 - ⚠️ **Note**: PDF files require serving via HTTP server (not `file://` protocol) due to CORS restrictions
 - ⚠️ **Note**: Entra ID authentication requires HTTPS in production (localhost allowed for development)
+- ⚠️ **Note**: Firebase requires internet connection for cloud storage features
 
 ### Future Enhancements (Not Yet Implemented)
 - ⏳ Seat name/description editing
 - ⏳ Undo/redo functionality
-- ⏳ Backend API integration for centralized data storage
+- ⏳ Firebase Authentication integration for secure database access

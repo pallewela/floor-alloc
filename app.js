@@ -19,8 +19,11 @@ class SeatMapper {
         this.floorData = {};
         this.initializeFloorData();
         
-        // Load saved data from localStorage
-        this.hasStoredData = this.loadFromStorage();
+        // Firebase initialized flag
+        this.firebaseInitialized = false;
+        
+        // hasStoredData will be set after async loading
+        this.hasStoredData = false;
         
         // DOM elements
         this.image = document.getElementById('floorImage');
@@ -116,9 +119,54 @@ class SeatMapper {
         });
     }
     
-    // Load seat mappings from localStorage
+    // Initialize Firebase storage
+    async initializeFirebaseStorage() {
+        try {
+            if (typeof firebaseStorage !== 'undefined') {
+                await firebaseStorage.initialize();
+                if (firebaseStorage.isActive()) {
+                    console.log('Firebase storage is active for seat mappings');
+                    this.firebaseInitialized = true;
+                }
+            }
+        } catch (error) {
+            console.warn('Failed to initialize Firebase storage:', error);
+        }
+    }
+    
+    // Load seat mappings from storage (Firebase or localStorage)
     // Returns true if data was loaded, false otherwise
-    loadFromStorage() {
+    async loadFromStorage() {
+        // Try Firebase first if available
+        if (typeof firebaseStorage !== 'undefined' && firebaseStorage.isActive()) {
+            try {
+                const allMappings = await firebaseStorage.loadAllSeatMappings();
+                let hasSeats = false;
+                
+                this.floors.forEach(floor => {
+                    if (allMappings[floor.id]) {
+                        const floorSeats = Array.isArray(allMappings[floor.id]) ? allMappings[floor.id] : [];
+                        this.floorData[floor.id] = {
+                            seats: floorSeats,
+                            nextSeatNumber: floorSeats.length > 0 ? 
+                                Math.max(...floorSeats.map(s => s.number || 0)) + 1 : 1
+                        };
+                        if (floorSeats.length > 0) {
+                            hasSeats = true;
+                        }
+                    }
+                });
+                
+                if (hasSeats) {
+                    console.log('Loaded seat mappings from Firebase');
+                    return true;
+                }
+            } catch (error) {
+                console.warn('Failed to load from Firebase, falling back to localStorage:', error);
+            }
+        }
+        
+        // Fall back to localStorage
         try {
             const savedData = localStorage.getItem(this.STORAGE_KEY);
             if (savedData) {
@@ -187,30 +235,55 @@ class SeatMapper {
         }
     }
     
-    // Save seat mappings to localStorage
-    saveToStorage() {
+    // Save seat mappings to storage (Firebase and localStorage)
+    async saveToStorage() {
+        const dataToSave = {};
+        
+        this.floors.forEach(floor => {
+            dataToSave[floor.id] = {
+                seats: this.floorData[floor.id].seats.map(seat => ({
+                    number: seat.number,
+                    normalizedX: seat.normalizedX,
+                    normalizedY: seat.normalizedY
+                })),
+                nextSeatNumber: this.floorData[floor.id].nextSeatNumber
+            };
+        });
+        
+        // Save to Firebase if available
+        if (typeof firebaseStorage !== 'undefined' && firebaseStorage.isActive()) {
+            try {
+                for (const floor of this.floors) {
+                    await firebaseStorage.saveSeatMappings(floor.id, dataToSave[floor.id].seats);
+                }
+            } catch (error) {
+                console.warn('Failed to save to Firebase:', error);
+            }
+        }
+        
+        // Also save to localStorage as backup
         try {
-            const dataToSave = {};
-            
-            this.floors.forEach(floor => {
-                dataToSave[floor.id] = {
-                    seats: this.floorData[floor.id].seats.map(seat => ({
-                        number: seat.number,
-                        normalizedX: seat.normalizedX,
-                        normalizedY: seat.normalizedY
-                    })),
-                    nextSeatNumber: this.floorData[floor.id].nextSeatNumber
-                };
-            });
-            
             localStorage.setItem(this.STORAGE_KEY, JSON.stringify(dataToSave));
         } catch (error) {
             console.warn('Failed to save seat mappings to localStorage:', error);
         }
     }
     
-    // Clear all saved mappings from localStorage
-    clearStorage() {
+    // Clear all saved mappings from storage (Firebase and localStorage)
+    async clearStorage() {
+        // Clear from Firebase if available
+        if (typeof firebaseStorage !== 'undefined' && firebaseStorage.isActive()) {
+            try {
+                for (const floor of this.floors) {
+                    await firebaseStorage.saveSeatMappings(floor.id, []);
+                }
+                console.log('Cleared all seat mappings from Firebase');
+            } catch (error) {
+                console.warn('Failed to clear Firebase storage:', error);
+            }
+        }
+        
+        // Clear from localStorage
         try {
             localStorage.removeItem(this.STORAGE_KEY);
             console.log('Cleared all seat mappings from localStorage');
@@ -220,7 +293,7 @@ class SeatMapper {
     }
     
     // Clear all seat data from all floors and storage
-    clearAllData() {
+    async clearAllData() {
         if (!confirm('Are you sure you want to clear ALL seat mappings from ALL floors? This cannot be undone.')) {
             return;
         }
@@ -233,8 +306,8 @@ class SeatMapper {
             };
         });
         
-        // Clear localStorage
-        this.clearStorage();
+        // Clear storage (Firebase and localStorage)
+        await this.clearStorage();
         
         // Update UI
         this.updateUI();
@@ -244,7 +317,13 @@ class SeatMapper {
     
     
     async init() {
-        // If no localStorage data, try loading from default file
+        // Initialize Firebase storage first
+        await this.initializeFirebaseStorage();
+        
+        // Load saved data from storage (Firebase or localStorage)
+        this.hasStoredData = await this.loadFromStorage();
+        
+        // If no stored data, try loading from default file
         if (!this.hasStoredData) {
             await this.loadFromDefaultFile();
         }
