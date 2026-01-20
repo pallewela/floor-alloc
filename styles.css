@@ -463,3 +463,262 @@ body.dragging-marker * {
 .seat-list::-webkit-scrollbar-thumb:hover {
     background: #5568d3;
 }
+
+/* Booking Link Panel */
+.booking-link-panel {
+    margin-bottom: 15px;
+}
+
+.booking-page-link {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    background: linear-gradient(135deg, #086972 0%, #01a9b4 100%);
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(8, 105, 114, 0.3);
+}
+
+.booking-page-link:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(8, 105, 114, 0.4);
+}
+
+.booking-page-link .link-arrow {
+    font-size: 20px;
+    transition: transform 0.2s ease;
+}
+
+.booking-page-link:hover .link-arrow {
+    transform: translateX(4px);
+}
+
+/* Mode Toggle Panel (kept for compatibility) */
+.mode-toggle-panel {
+    background: #f9f9f9;
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 15px;
+}
+
+.mode-toggle {
+    display: flex;
+    gap: 5px;
+    background: #e0e0e0;
+    border-radius: 6px;
+    padding: 3px;
+}
+
+.mode-btn {
+    flex: 1;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    background: transparent;
+    color: #666;
+    transition: all 0.2s ease;
+}
+
+.mode-btn:hover {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+.mode-btn.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+/* Booking Controls Panel */
+.booking-controls-panel {
+    background: #f0f7ff;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+    border: 1px solid #d0e3f7;
+}
+
+.booking-control {
+    margin-bottom: 12px;
+}
+
+.booking-control:last-of-type {
+    margin-bottom: 15px;
+}
+
+.booking-control label {
+    display: block;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 5px;
+    font-size: 13px;
+}
+
+.booking-input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 2px solid #d0e3f7;
+    border-radius: 6px;
+    font-size: 14px;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease;
+}
+
+.booking-input:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.booking-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding-top: 10px;
+    border-top: 1px solid #d0e3f7;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    color: #555;
+}
+
+.legend-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.legend-dot.available {
+    background: #28a745;
+}
+
+.legend-dot.booked {
+    background: #dc3545;
+}
+
+.legend-dot.my-booking {
+    background: #007bff;
+}
+
+/* Booking Summary Panel */
+.booking-summary-panel {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.booking-summary-panel h2 {
+    color: #333;
+    margin-bottom: 15px;
+    font-size: 1.3em;
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.booking-list {
+    flex: 1;
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+}
+
+.booking-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    border-left: 4px solid #007bff;
+}
+
+.booking-item-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.booking-seat-number {
+    font-weight: 600;
+    color: #333;
+}
+
+.booking-floor-name {
+    font-size: 12px;
+    color: #666;
+}
+
+.booking-item .cancel-btn {
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background 0.2s ease;
+}
+
+.booking-item .cancel-btn:hover {
+    background: #c82333;
+}
+
+/* Seat marker colors for booking mode */
+.marker-circle.seat-available {
+    fill: #28a745;
+}
+
+.marker-circle.seat-booked {
+    fill: #dc3545;
+}
+
+.marker-circle.seat-my-booking {
+    fill: #007bff;
+}
+
+.marker-circle.seat-available:hover {
+    fill: #218838;
+    cursor: pointer;
+}
+
+.marker-circle.seat-booked:hover {
+    fill: #c82333;
+    cursor: not-allowed;
+}
+
+.marker-circle.seat-my-booking:hover {
+    fill: #0056b3;
+    cursor: pointer;
+}
+
+/* Booking tooltip */
+.booking-tooltip {
+    position: absolute;
+    background: rgba(0, 0, 0, 0.85);
+    color: white;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    pointer-events: none;
+    z-index: 1000;
+    white-space: nowrap;
+}

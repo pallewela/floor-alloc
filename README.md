@@ -42,19 +42,34 @@ A web application for mapping and booking work areas (seats) in an office buildi
 - **Images**: JPG, PNG, GIF, WebP
 - **PDF**: PDF floor plans (requires HTTP server, not `file://` protocol)
 
+### Seat Booking
+- **Two Modes**: Toggle between Mapping Mode (admin) and Booking Mode (user)
+- **Date Selection**: Book seats for specific dates
+- **Visual Status**: Seats show as green (available), red (booked by others), or blue (your booking)
+- **Easy Booking**: Click to book an available seat, click again to cancel your booking
+- **User Identity**: Enter your name to track your bookings
+- **Booking Summary**: View all your bookings for the selected date
+
 ## Usage
 
+### Mapping Mode (Admin)
 1. Open `index.html` in a web browser (use a local server for PDF support)
-2. Select a floor from the dropdown
-3. Click anywhere on the floor plan to add a seat marker
-4. Drag a marker to reposition it
-5. Right-click on or near a marker to remove it
-6. Use zoom controls or mouse wheel to zoom in/out
-7. Toggle snap grid for precise marker placement
-8. View the seat list in the right panel
-8. Click export buttons to output mapping data (open DevTools with F12 to view)
-9. Use "Save to File" to download mappings as JSON for backup or sharing
-10. Use "Load from File" to import mappings from a previously saved JSON file
+2. Ensure "Mapping Mode" is selected
+3. Select a floor from the dropdown
+4. Click anywhere on the floor plan to add a seat marker
+5. Drag a marker to reposition it
+6. Right-click on or near a marker to remove it
+7. Use zoom controls or mouse wheel to zoom in/out
+8. Toggle snap grid for precise marker placement
+9. Use "Save to File" to download mappings as JSON for backup
+
+### Booking Mode (User)
+1. Switch to "Booking Mode" using the mode toggle
+2. Enter your name in the username field
+3. Select the date you want to book for
+4. Click on a green (available) seat to book it
+5. Click on a blue (your booking) seat to cancel it
+6. View your bookings in the summary panel
 
 ## Configuration
 

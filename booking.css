@@ -1,0 +1,253 @@
+/* Booking Page Specific Styles */
+
+body.booking-page {
+    background: linear-gradient(135deg, #1a5f7a 0%, #086972 50%, #01a9b4 100%);
+}
+
+/* Booking Header */
+.booking-header {
+    background: linear-gradient(135deg, #086972 0%, #01a9b4 100%);
+    color: white;
+    padding: 15px 30px;
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.booking-header h1 {
+    font-size: 1.8em;
+    font-weight: 600;
+    margin: 0;
+}
+
+.back-link {
+    color: white;
+    text-decoration: none;
+    font-weight: 500;
+    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 6px;
+    transition: background 0.2s ease;
+}
+
+.back-link:hover {
+    background: rgba(255, 255, 255, 0.25);
+}
+
+/* Selection Info */
+.selection-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.selection-hint {
+    font-size: 13px;
+    color: #666;
+    font-weight: 500;
+}
+
+/* Selection Rectangle */
+.selection-rectangle {
+    position: absolute;
+    border: 2px dashed #ffc107;
+    background: rgba(255, 193, 7, 0.15);
+    pointer-events: none;
+    z-index: 20;
+    display: none;
+    box-shadow: 0 0 10px rgba(255, 193, 7, 0.3);
+}
+
+/* Selection Preview (seats that will be selected) */
+.marker-circle.selection-preview {
+    fill: #ffc107 !important;
+    stroke: #fff;
+    stroke-width: 2;
+    animation: pulse-selection 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes pulse-selection {
+    from {
+        opacity: 0.7;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* Selected Seat Marker */
+.marker-circle.seat-selected {
+    fill: #ffc107;
+    stroke: white;
+    stroke-width: 2;
+    cursor: pointer;
+}
+
+.marker-circle.seat-selected:hover {
+    fill: #e0a800;
+}
+
+/* Selection Panel */
+.selection-panel {
+    background: #fff9e6;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+    border: 2px solid #ffc107;
+}
+
+.selection-panel h2 {
+    color: #856404;
+    font-size: 1.2em;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #ffc107;
+}
+
+.selected-seats-list {
+    max-height: 120px;
+    overflow-y: auto;
+    margin-bottom: 12px;
+}
+
+.selected-seats-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.selected-seat-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+    color: #333;
+    padding: 4px 8px;
+    border-radius: 16px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.chip-remove {
+    background: rgba(0, 0, 0, 0.2);
+    border: none;
+    color: #333;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    line-height: 1;
+    padding: 0;
+    transition: background 0.2s ease;
+}
+
+.chip-remove:hover {
+    background: rgba(0, 0, 0, 0.4);
+}
+
+.selection-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.action-btn {
+    flex: 1;
+    padding: 10px 16px;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.action-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.book-btn {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+}
+
+.book-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+.clear-btn {
+    background: #6c757d;
+    color: white;
+}
+
+.clear-btn:hover:not(:disabled) {
+    background: #5a6268;
+}
+
+/* Legend update for selected state */
+.legend-dot.selected {
+    background: #ffc107;
+}
+
+/* Override marker cursor in booking mode */
+.booking-page .marker-circle.seat-available {
+    cursor: pointer;
+}
+
+.booking-page .marker-circle.seat-booked {
+    cursor: not-allowed;
+}
+
+.booking-page .marker-circle.seat-my-booking {
+    cursor: pointer;
+}
+
+/* Booking controls panel adjustments */
+.booking-page .booking-controls-panel {
+    display: block;
+}
+
+/* Image wrapper cursor */
+.booking-page .image-wrapper {
+    cursor: crosshair;
+}
+
+/* Prevent text selection during drag */
+.booking-page.selecting {
+    user-select: none;
+}
+
+.booking-page.selecting * {
+    user-select: none;
+}
+
+/* Booking summary panel adjustments for booking page */
+.booking-page .booking-summary-panel {
+    flex: 1;
+    min-height: 150px;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Responsive adjustments */
+@media (max-width: 900px) {
+    .header-content {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+    }
+    
+    .selection-info {
+        display: none;
+    }
+}

@@ -50,6 +50,9 @@ class SeatMapper {
         this.gridSizeDisplay = document.getElementById('gridSize');
         this.gridOverlay = document.getElementById('gridOverlay');
         
+        // Mapping panel
+        this.mappingPanel = document.getElementById('mappingPanel');
+        
         // Floor plan element (will be set to either image or canvas)
         this.floorPlanElement = null;
         this.isPDF = false;
@@ -239,6 +242,7 @@ class SeatMapper {
         alert('All seat mappings have been cleared.');
     }
     
+    
     async init() {
         // If no localStorage data, try loading from default file
         if (!this.hasStoredData) {
@@ -335,6 +339,7 @@ class SeatMapper {
         this.gridIncreaseBtn.addEventListener('click', () => {
             this.increaseGridSize();
         });
+        
     }
     
     populateFloorSelector() {
@@ -935,16 +940,17 @@ class SeatMapper {
             circle.setAttribute('cx', seat.displayX);
             circle.setAttribute('cy', seat.displayY);
             circle.setAttribute('r', '5');
-            circle.setAttribute('fill', '#667eea');
             circle.setAttribute('stroke', 'white');
             circle.setAttribute('stroke-width', '1');
-            circle.setAttribute('class', 'marker-circle');
             circle.setAttribute('data-seat-number', seat.number);
-            // Allow pointer events on circles for right-click removal
             circle.style.pointerEvents = 'all';
             
             // Store seat number for event handlers
             const seatNumber = seat.number;
+            
+            // Mapping mode - default color
+            circle.setAttribute('fill', '#667eea');
+            circle.setAttribute('class', 'marker-circle');
             
             // Add mousedown handler for drag start
             circle.addEventListener('mousedown', (e) => {
@@ -959,6 +965,7 @@ class SeatMapper {
             circle.addEventListener('contextmenu', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
+                
                 const seatIndex = this.seats.findIndex(s => s.number === seatNumber);
                 if (seatIndex !== -1) {
                     this.seats.splice(seatIndex, 1);
@@ -1260,5 +1267,6 @@ class SeatMapper {
 
 // Initialize the application when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    new SeatMapper();
+    // Expose globally for booking cancel buttons
+    window.seatMapper = new SeatMapper();
 });

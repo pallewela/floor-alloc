@@ -131,6 +131,28 @@ A web application for mapping and booking work areas (seats) in an office buildi
 - ✅ **Auto-Save**: Position changes automatically saved to localStorage
 - ✅ **Zoom Compatible**: Drag works correctly at any zoom level
 
+#### 11. Seat Booking Functionality ✅
+- ✅ **Mode Toggle**: Switch between "Mapping Mode" and "Booking Mode"
+  - Mapping Mode: Add, remove, and reposition seat markers (admin function)
+  - Booking Mode: Book and cancel seat reservations (user function)
+- ✅ **User Identity**: Simple username input for identifying bookings
+  - Username persisted in localStorage
+  - Required before booking
+- ✅ **Date Selection**: Book seats for specific dates
+  - Date picker defaulting to today
+  - View bookings for any date
+- ✅ **Seat Status Visual Indicators**:
+  - Available seats: Green markers
+  - Booked by others: Red markers (shows booker name on hover)
+  - Your bookings: Blue markers
+- ✅ **Booking Actions**:
+  - Click available seat to book it
+  - Click your booking to cancel it
+  - Cannot modify others' bookings
+- ✅ **Booking Summary Panel**: Shows your bookings for selected date
+- ✅ **Booking Persistence**: All bookings saved to localStorage
+- ✅ **Multi-floor Support**: Bookings tracked per floor
+
 ### Technical Implementation
 
 #### Coordinate System ✅
@@ -195,5 +217,4 @@ A web application for mapping and booking work areas (seats) in an office buildi
 
 ### Future Enhancements (Not Yet Implemented)
 - ⏳ Seat name/description editing
-- ⏳ Seat booking functionality
 - ⏳ Undo/redo functionality
