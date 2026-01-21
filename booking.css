@@ -4,6 +4,13 @@ body.booking-page {
     background: linear-gradient(135deg, #1a5f7a 0%, #086972 50%, #01a9b4 100%);
 }
 
+/* Dim the floor plan image/PDF to make seat markers stand out */
+.booking-page #floorImage,
+.booking-page #pdfCanvas {
+    /* opacity: 0.7; */
+    filter: brightness(0.5);
+}
+
 /* Booking Header */
 .booking-header {
     background: linear-gradient(135deg, #086972 0%, #01a9b4 100%);
